@@ -1,0 +1,63 @@
+# Tag Management Bundle for Pimcore 10
+
+Dieses Bundle stellt den Bereich "Tag and Snippet Management" zur Verfügung, welcher in Pimcore 6.x als veraltet markiert und mit Version 10 entfernt wurde.
+
+## Funktionen
+
+Das Bundle ermöglicht es, HTML-Tags und Snippets (z.B. Google Analytics, Facebook Pixel, Custom JS/CSS) flexibel in die Webseite zu integrieren, basierend auf verschiedenen Regeln:
+
+- **URL-Pattern**: Anzeige nur auf bestimmten Seiten.
+- **HTTP-Methoden**: Einschränkung auf GET, POST etc.
+- **Site-Check**: Zuweisung zu spezifischen Pimcore-Sites.
+- **Parameter**: Prüfung auf bestimmte Query-Parameter.
+- **Positionierung**: Einfügen am Anfang oder Ende von `<head>` oder `<body>`, oder an spezifischen CSS-Selektoren.
+- **Zeitsteuerung**: Ablaufdatum für einzelne Snippets.
+
+## Installation
+
+1. **Installation via Composer**
+
+   Aktuell muss das Bundle manuell zum Projekt hinzugefügt werden (da es noch nicht auf Packagist ist oder als lokales Repository eingebunden werden muss):
+
+   ```bash
+   composer require weblizards/tag-management-bundle
+   ```
+
+2. **Bundle aktivieren**
+
+   Aktivieren Sie das Bundle in der `config/bundles.php` oder über das Pimcore Admin-Panel / CLI:
+
+   ```bash
+   bin/console pimcore:bundle:enable WeblizardsTagManagementBundle
+   ```
+   
+3. **Migrations**
+
+   Nach der Installation des Bundles müssen die Migrations ausgeführt werden.
+
+   Migrations anzeigen:
+
+   ```bash
+   bin/console doctrine:migrations:list --prefix "Weblizards\TagManagementBundle"
+   ```
+ 
+   Migrations ausführen:
+ 
+   ```bash
+   bin/console doctrine:migrations:migrate --prefix "Weblizards\TagManagementBundle"
+   ```
+
+4. **Datenbank & Speicher**
+
+   Das Bundle verwendet `PhpArrayTable` zur Speicherung der Konfiguration. Die Daten werden standardmäßig im Pimcore-Verzeichnis unter `var/config/tag-manager.php` (oder ähnlich) gespeichert. Es ist keine manuelle Datenbank-Migration erforderlich.
+
+## Konfiguration
+
+Nach der Installation finden Sie den neuen Menüpunkt unter **Einstellungen > Tag & Snippet Management**.
+
+## Lizenz
+
+Dieses Bundle steht unter der [GPL-3.0-or-later](LICENSE.md).
+
+---
+Entwickelt von [Weblizards GmbH](https://www.weblizards.de).

@@ -1,0 +1,3 @@
+weblizards_tagmanagement:
+    resource: "@WeblizardsTagManagementBundle/Controller/Admin/"
+    type: annotation

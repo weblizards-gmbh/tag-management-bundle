@@ -1,0 +1,9 @@
+.idea
+
+# PHP-CS-Fixer
+/.php-cs-fixer.php
+/.php-cs-fixer.cache
+
+# composer
+/vendor/
+composer.lock

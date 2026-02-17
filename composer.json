@@ -1,0 +1,21 @@
+{
+    "name": "weblizards/tag-management-bundle",
+    "type": "pimcore-bundle",
+    "description": "Re-introduces the 'Tag and Snippet Management' feature which was deprecated in Pimcore 6.x and removed in Pimcore 10.",
+    "license": "GPL-3.0-or-later",
+    "authors": [
+        {
+            "name": "Weblizards GmbH",
+            "homepage": "https://www.weblizards.de"
+        }
+    ],
+    "require": {
+        "pimcore/pimcore": "^10.0",
+        "nesbot/carbon": "^2.0"
+    },
+    "autoload": {
+        "psr-4": {
+            "Weblizards\\TagManagementBundle\\": "src/TagManagementBundle"
+        }
+    }
+}
