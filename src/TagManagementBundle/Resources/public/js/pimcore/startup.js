@@ -25,7 +25,7 @@ pimcore.plugin.WeblizardsTagManagementBundle = Class.create(pimcore.plugin.admin
             const toolbar = pimcore.globalmanager.get("layout_toolbar");
 
             toolbar.marketingMenu.add({
-                text: t("tag_snippet_management"),
+                text: t("wl_tagmanagement.tag_snippet_management"),
                 iconCls: "pimcore_icon_tag",
                 handler: function () {
                     try {

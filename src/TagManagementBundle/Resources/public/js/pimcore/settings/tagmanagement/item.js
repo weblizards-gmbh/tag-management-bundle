@@ -39,7 +39,7 @@ pimcore.settings.tagmanagement.item = Class.create({
 
         var panelButtons = [];
         panelButtons.push({
-            text: t("save"),
+            text: t("wl_tagmanagement.save"),
             iconCls: "pimcore_icon_apply",
             handler: this.save.bind(this)
         });
@@ -48,7 +48,7 @@ pimcore.settings.tagmanagement.item = Class.create({
             style: "margin: 20px 0 0 0;",
             tbar: [{
                 xtype: "tbtext",
-                html: t("tags")
+                html: t("wl_tagmanagement.tags")
             }, {
                 iconCls: "pimcore_icon_add",
                 handler: this.addItem.bind(this)
@@ -67,13 +67,13 @@ pimcore.settings.tagmanagement.item = Class.create({
                 padding: 0,
                 items: [{
                     xtype: "textfield",
-                    fieldLabel: t("name"),
+                    fieldLabel: t("wl_tagmanagement.name"),
                     name: "params.name" + i,
                     value: (this.data.params && this.data.params[i]) ? this.data.params[i]["name"] : ""
                 },{
                     xtype: "textfield",
                     margin: '0 0 0 20',
-                    fieldLabel: t("value"),
+                    fieldLabel: t("wl_tagmanagement.value"),
                     name: "params.value" + i,
                     value: (this.data.params && this.data.params[i]) ? this.data.params[i]["value"] : ""
                 }]
@@ -82,7 +82,7 @@ pimcore.settings.tagmanagement.item = Class.create({
 
         var paramsFieldSet = {
             xtype: "fieldset",
-            title: t("parameters") + " (GET &amp; POST)",
+            title: t("wl_tagmanagement.parameters") + " (GET &amp; POST)",
             items: paramsFieldSetItems,
             collapsible: true,
             collapsed: true
@@ -100,30 +100,30 @@ pimcore.settings.tagmanagement.item = Class.create({
                 xtype: "textfield",
                 name: "name",
                 value: this.data.name,
-                fieldLabel: t("name"),
+                fieldLabel: t("wl_tagmanagement.name"),
                 width: 450,
                 disabled: true
             },{
                 xtype: "textarea",
                 name: "description",
                 value: this.data.description,
-                fieldLabel: t("description"),
+                fieldLabel: t("wl_tagmanagement.description"),
                 width: 450,
                 height: 50
             },
                 {
                     xtype: "checkbox",
-                    fieldLabel: t("temporarily_disabled"),
+                    fieldLabel: t("wl_tagmanagement.temporarily_disabled"),
                     name: "disabled",
                     checked: this.data.disabled
                 },
                 {
                 xtype: "fieldset",
-                title: t("conditions"),
+                title: t("wl_tagmanagement.conditions"),
                 items: [{
                     xtype: "combo",
                     name: "siteId",
-                    fieldLabel: t("site"),
+                    fieldLabel: t("wl_tagmanagement.site"),
                     store: pimcore.globalmanager.get("sites"),
                     valueField: "id",
                     displayField: "domain",
@@ -134,7 +134,7 @@ pimcore.settings.tagmanagement.item = Class.create({
                     xtype: "textfield",
                     name: "urlPattern",
                     value: this.data.urlPattern,
-                    fieldLabel: t("url_pattern"),
+                    fieldLabel: t("wl_tagmanagement.url_pattern"),
                     width: 550,
                     fieldCls: "input_drop_target",
                     listeners: {
@@ -176,9 +176,9 @@ pimcore.settings.tagmanagement.item = Class.create({
                     }
                 },{
                     xtype:'combo',
-                    fieldLabel: t('http_method'),
+                    fieldLabel: t('wl_tagmanagement.http_method'),
                     name: "httpMethod",
-                    store: [["",t("any")],["get","GET"],["post","POST"]],
+                    store: [["",t("wl_tagmanagement.any")],["get","GET"],["post","POST"]],
                     triggerAction: "all",
                     typeAhead: false,
                     editable: false,
@@ -190,7 +190,7 @@ pimcore.settings.tagmanagement.item = Class.create({
                     xtype: "textfield",
                     name: "textPattern",
                     value: this.data.textPattern,
-                    fieldLabel: t("matching_text"),
+                    fieldLabel: t("wl_tagmanagement.matching_text"),
                     width: 400
                 },
                     paramsFieldSet
@@ -232,12 +232,12 @@ pimcore.settings.tagmanagement.item = Class.create({
                 xtype: "textarea",
                 width: 440,
                 height: 200,
-                fieldLabel: t("code"),
+                fieldLabel: t("wl_tagmanagement.code"),
                 name: "item." + myId + ".code",
                 value: data.code
             },{
                 xtype:'combo',
-                fieldLabel: t('element_css_selector'),
+                fieldLabel: t('wl_tagmanagement.element_css_selector'),
                 name: "item." + myId + ".element",
                 disableKeyFilter: true,
                 store: [["body","body"],["head","head"]],
@@ -247,9 +247,9 @@ pimcore.settings.tagmanagement.item = Class.create({
                 width: 250
             },{
                 xtype:'combo',
-                fieldLabel: t('insert_position'),
+                fieldLabel: t('wl_tagmanagement.insert_position'),
                 name: "item." + myId + ".position",
-                store: [["beginning",t("beginning")],["end",t("end")]],
+                store: [["beginning",t("wl_tagmanagement.beginning")],["end",t("wl_tagmanagement.end")]],
                 triggerAction: "all",
                 typeAhead: false,
                 editable: false,
@@ -259,12 +259,12 @@ pimcore.settings.tagmanagement.item = Class.create({
                 width: 250
             },{
                 xtype: "checkbox",
-                fieldLabel: t("temporarily_disabled"),
+                fieldLabel: t("wl_tagmanagement.temporarily_disabled"),
                 name: "item." + myId + ".disabled",
                 checked: data.disabled
             },{
                 xtype: "checkbox",
-                fieldLabel: t("enabled_in_editmode"),
+                fieldLabel: t("wl_tagmanagement.enabled_in_editmode"),
                 name: "item." + myId + ".enabledInEditmode",
                 checked: data.enabledInEditmode
             },{
@@ -272,7 +272,7 @@ pimcore.settings.tagmanagement.item = Class.create({
                 name: "item." + myId + ".date",
                 width: 220,
                 style: "float: left; margin-right:5px;",
-                fieldLabel: t("expiry"),
+                fieldLabel: t("wl_tagmanagement.expiry"),
                 value: data.date,
                 format: "m/d/y",
                 renderer: function(d) {
@@ -320,7 +320,7 @@ pimcore.settings.tagmanagement.item = Class.create({
 
     saveOnComplete: function () {
         this.parentPanel.tree.getStore().load();
-        pimcore.helpers.showNotification(t("success"), t("saved_successfully"), "success");
+        pimcore.helpers.showNotification(t("wl_tagmanagement.success"), t("wl_tagmanagement.saved_successfully"), "success");
     },
 
     getCurrentIndex: function () {

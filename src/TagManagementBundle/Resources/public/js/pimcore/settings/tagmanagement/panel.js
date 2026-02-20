@@ -28,7 +28,7 @@ pimcore.settings.tagmanagement.panel = Class.create({
         if (!this.panel) {
             this.panel = new Ext.Panel({
                 id: "pimcore_tagmanagement",
-                title: t("tag_snippet_management"),
+                title: t("wl_tagmanagement.tag_snippet_management"),
                 iconCls: "pimcore_icon_tag",
                 border: false,
                 layout: "border",
@@ -84,7 +84,7 @@ pimcore.settings.tagmanagement.panel = Class.create({
                     cls: 'pimcore_toolbar_border_bottom',
                     items: [
                         {
-                            text: t("add"),
+                            text: t("wl_tagmanagement.add"),
                             iconCls: "pimcore_icon_add",
                             handler: this.addField.bind(this)
                         }
@@ -163,7 +163,7 @@ pimcore.settings.tagmanagement.panel = Class.create({
 
         var menu = new Ext.menu.Menu();
         menu.add(new Ext.menu.Item({
-            text: t('delete'),
+            text: t('wl_tagmanagement.delete'),
             iconCls: "pimcore_icon_delete",
             handler: this.deleteField.bind(this, tree, record)
         }));
@@ -173,7 +173,7 @@ pimcore.settings.tagmanagement.panel = Class.create({
     },
 
     addField: function () {
-        Ext.MessageBox.prompt(' ', t('enter_the_name_of_the_new_item') + "(a-zA-Z-_)",
+        Ext.MessageBox.prompt(' ', t('wl_tagmanagement.enter_the_name_of_the_new_item') + "(a-zA-Z-_)",
                                                         this.addFieldComplete.bind(this), null, null, "");
     },
 
@@ -185,7 +185,7 @@ pimcore.settings.tagmanagement.panel = Class.create({
             var tags = this.tree.getRootNode().childNodes;
             for (var i = 0; i < tags.length; i++) {
                 if (tags[i].text == value) {
-                    Ext.MessageBox.alert(' ', t('name_already_in_use'));
+                    Ext.MessageBox.alert(' ', t('wl_tagmanagement.name_already_in_use'));
                     return;
                 }
             }
@@ -202,7 +202,7 @@ pimcore.settings.tagmanagement.panel = Class.create({
                     this.tree.getStore().load();
 
                     if(!data || !data.success) {
-                        Ext.Msg.alert(' ', t('failed_to_create_new_item'));
+                        Ext.Msg.alert(' ', t('wl_tagmanagement.failed_to_create_new_item'));
                     } else {
                         this.openTag(data.id);
                     }
@@ -213,7 +213,7 @@ pimcore.settings.tagmanagement.panel = Class.create({
             return;
         }
         else {
-            Ext.Msg.alert(' ', t('failed_to_create_new_item'));
+            Ext.Msg.alert(' ', t('wl_tagmanagement.failed_to_create_new_item'));
         }
     },
 
