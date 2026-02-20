@@ -47,7 +47,7 @@ class AbstractTranslationMigration extends AbstractMigration
                 throw new \Exception('Values for translation must be an array with languages as keys.');
             }
             $translation = Translation::getByKey($key, $domain, true);
-            $this->updateTranslation($translation, $values, $overwrite);
+            $this->updateTranslation($translation, $values, $domain, $overwrite);
             $translation->save();
         }
 

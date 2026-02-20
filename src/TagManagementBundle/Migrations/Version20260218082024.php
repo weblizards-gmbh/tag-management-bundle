@@ -3,6 +3,7 @@
 namespace Weblizards\TagManagementBundle\Migrations;
 
 use Doctrine\DBAL\Schema\Schema;
+use Pimcore\Model\Translation;
 
 class Version20260218082024 extends AbstractTranslationMigration
 {
@@ -130,5 +131,10 @@ class Version20260218082024 extends AbstractTranslationMigration
     public function getDescription(): string
     {
         return 'Add translations for tag & snippet management';
+    }
+
+    public function up(Schema $schema): void
+    {
+        $this->updateTranslations($this->translations, Translation::DOMAIN_ADMIN, true);
     }
 }

@@ -20,7 +20,7 @@ Das Bundle ermöglicht es, HTML-Tags und Snippets (z.B. Google Analytics, Facebo
    Aktuell muss das Bundle manuell zum Projekt hinzugefügt werden (da es noch nicht auf Packagist ist oder als lokales Repository eingebunden werden muss):
 
    ```bash
-   composer require weblizards/tag-management-bundle
+   composer require weblizards/tag-management-bundle:v1.0.0-RC2
    ```
 
 2. **Bundle aktivieren**
