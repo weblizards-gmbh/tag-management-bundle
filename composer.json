@@ -11,7 +11,10 @@
     ],
     "require": {
         "pimcore/pimcore": "^10.0",
-        "nesbot/carbon": "^2.0"
+        "nesbot/carbon": "^2.0",
+        "symfony/dom-crawler": "^5.2",
+        "symfony/css-selector": "^5.2",
+        "masterminds/html5": "^2.7"
     },
     "autoload": {
         "psr-4": {

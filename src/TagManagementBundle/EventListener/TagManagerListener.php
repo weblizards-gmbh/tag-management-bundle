@@ -22,6 +22,7 @@ use Symfony\Component\EventDispatcher\EventSubscriberInterface;
 use Symfony\Component\HttpKernel\Event\ResponseEvent;
 use Symfony\Component\HttpKernel\KernelEvents;
 use Weblizards\TagManagementBundle\Model\Tag;
+use Weblizards\TagManagementBundle\Service\HtmlInsertionService;
 
 class TagManagerListener implements EventSubscriberInterface
 {
@@ -102,9 +103,9 @@ class TagManagerListener implements EventSubscriberInterface
             return;
         }
 
-        $html = null;
         $content = $response->getContent();
         $requestParams = array_merge($_GET, $_POST);
+        $htmlInserter = new HtmlInsertionService();
 
         $editmode = $this->editmodeResolver->isEditmode($request);
 
@@ -168,13 +169,6 @@ class TagManagerListener implements EventSubscriberInterface
                             if (in_array($item['element'], ['body', 'head'])) {
                                 // check if the code should be inserted using one of the presets
                                 // because this can be done much faster than using a html parser
-                                if ($html) {
-                                    // reset simple_html_dom if set
-                                    $html->clear();
-                                    unset($html);
-                                    $html = null;
-                                }
-
                                 if ('end' == $item['position']) {
                                     $regEx = '@</' . $item['element'] . '>@i';
                                     $content = preg_replace($regEx, "\n\n" . $item['code'] . "\n\n</" . $item['element'] . '>', $content, 1);
@@ -182,42 +176,19 @@ class TagManagerListener implements EventSubscriberInterface
                                     $regEx = '/<' . $item['element'] . '([^a-zA-Z])?( [^>]+)?>/';
                                     $content = preg_replace($regEx, '<' . $item['element'] . "$1$2>\n\n" . $item['code'] . "\n\n", $content, 1);
                                 }
+
                             } else {
-                                // use simple_html_dom
-                                if (!$html) {
-                                    include_once PIMCORE_PATH . '/lib/simple_html_dom.php';
-                                    $html = str_get_html($content);
-                                }
-
-                                if ($html) {
-                                    $element = $html->find($item['element'], 0);
-                                    if ($element) {
-                                        if ('end' == $item['position']) {
-                                            $element->innertext = $element->innertext . "\n\n" . $item['code'] . "\n\n";
-                                        } else {
-                                            // beginning
-                                            $element->innertext = "\n\n" . $item['code'] . "\n\n" . $element->innertext;
-                                        }
-
-                                        // we havve to reinitialize the html object, otherwise it causes problems with nested child selectors
-                                        $content = $html->save();
-
-                                        $html->clear();
-                                        unset($html);
-
-                                        $html = null;
-                                    }
-                                }
+                                $content = $htmlInserter->insert(
+                                    $content,
+                                    (string) $item['element'],
+                                    (string) $item['position'],
+                                    (string) $item['code']
+                                );
                             }
                         }
                     }
                 }
             }
-        }
-
-        if ($html && method_exists($html, 'clear')) {
-            $html->clear();
-            unset($html);
         }
 
         $response->setContent($content);
