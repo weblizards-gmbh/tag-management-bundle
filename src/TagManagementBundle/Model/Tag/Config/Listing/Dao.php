@@ -36,7 +36,10 @@ class Dao extends Model\Dao\PhpArrayTable
         $propertiesData = $this->db->fetchAll($this->model->getFilter(), $this->model->getOrder());
 
         foreach ($propertiesData as $propertyData) {
-            $properties[] = Config::getByName($propertyData['id']);
+            $property = Config::getByName($propertyData['id']);
+            if ($property) {
+                $properties[] = $property;
+            }
         }
 
         $this->model->setTags($properties);

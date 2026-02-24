@@ -51,14 +51,12 @@ class Config extends Model\AbstractModel
 
     public static function getByName(string $name): ?Config
     {
-        try {
-            $tag = new self();
-            $tag->getDao()->getByName($name);
-
-            return $tag;
-        } catch (\Exception $e) {
+        $tag = new self();
+        if (!$tag->getDao()->getByName($name)) {
             return null;
         }
+
+        return $tag;
     }
 
     /**

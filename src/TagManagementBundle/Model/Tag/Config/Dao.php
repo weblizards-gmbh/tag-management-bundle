@@ -25,25 +25,22 @@ class Dao extends Model\Dao\PhpArrayTable
         $this->setFile('tag-manager');
     }
 
-    /**
-     * @param null|string $id
-     *
-     * @throws \Exception
-     */
-    public function getByName($id = null)
+    public function getByName(?string $id = null): bool
     {
-        if (null != $id) {
+        if (null !== $id) {
             $this->model->setName($id);
         }
 
         $data = $this->db->getById($this->model->getName());
 
-        if (isset($data['id'])) {
-            $this->assignVariablesToModel($data);
-            $this->model->setName($data['id']);
-        } else {
-            throw new \Exception('Tag with id: ' . $this->model->getName() . ' does not exist');
+        if (!isset($data['id'])) {
+            return false;
         }
+
+        $this->assignVariablesToModel($data);
+        $this->model->setName($data['id']);
+
+        return true;
     }
 
     /**
