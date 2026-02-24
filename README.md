@@ -11,7 +11,7 @@ Das Bundle ermöglicht es, HTML-Tags und Snippets (z.B. Google Analytics, Facebo
 - **Site-Check**: Zuweisung zu spezifischen Pimcore-Sites.
 - **Parameter**: Prüfung auf bestimmte Query-Parameter.
 - **Positionierung**: Einfügen am Anfang oder Ende von `<head>` oder `<body>`, oder an spezifischen CSS-Selektoren.
-- **Zeitsteuerung**: Ablaufdatum für einzelne Snippets.
+- **Zeitsteuerung**: Ablaufdatum für einzelne Snippets. Diese werden automatisch deaktiviert, wenn das Datum erreicht ist (erfordert Command-Ausführung).
 
 ## Installation
 
@@ -50,6 +50,16 @@ Das Bundle ermöglicht es, HTML-Tags und Snippets (z.B. Google Analytics, Facebo
 4. **Datenbank & Speicher**
 
    Das Bundle verwendet `PhpArrayTable` zur Speicherung der Konfiguration. Die Daten werden standardmäßig im Pimcore-Verzeichnis unter `var/config/tag-manager.php` (oder ähnlich) gespeichert. Es ist keine manuelle Datenbank-Migration erforderlich.
+
+5. **Automatische Deaktivierung abgelaufener Snippets (optional)**
+
+   Um Snippets mit gesetztem Ablaufdatum automatisch zu deaktivieren, kann ein Cronjob eingerichtet werden, der den folgenden Command regelmäßig ausführt:
+
+   ```bash
+   bin/console weblizards:tag-management:disable-expired-items
+   ```
+
+   Dieser Command prüft alle konfigurierten Tags und setzt das "Deaktiviert"-Flag für alle Items, deren Ablaufdatum in der Vergangenheit liegt.
 
 ## Konfiguration
 
