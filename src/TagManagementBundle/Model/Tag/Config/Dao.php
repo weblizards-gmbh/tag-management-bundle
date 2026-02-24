@@ -12,6 +12,7 @@
 
 namespace Weblizards\TagManagementBundle\Model\Tag\Config;
 
+use Pimcore\Cache;
 use Pimcore\Model;
 
 /**
@@ -65,6 +66,7 @@ class Dao extends Model\Dao\PhpArrayTable
             }
         }
         $this->db->insertOrUpdate($data, $this->model->getName());
+        Cache::clearTags(['tagmanagement', 'output']);
     }
 
     /**
