@@ -151,14 +151,29 @@ class TagManagementController extends AdminController
         }
         $tag->setParams($params);
 
-        if ($request->get('name') != $data['name']) {
-            $tag->setName($request->get('name')); // set the old name again, so that the old file get's deleted
-            $tag->delete(); // delete the old config / file
-            $tag->setName($data['name']);
+        $oldName = $request->get('name');
+        $newName = $data['name'];
+
+        try {
+            if ($oldName !== $newName) {
+                // First write under the new name, then delete the old one to avoid data loss on failure.
+                $tag->setName($newName);
+                $tag->save();
+
+                $oldTag = Tag\Config::getByName($oldName);
+                if ($oldTag) {
+                    $oldTag->delete();
+                }
+            } else {
+                $tag->save();
+            }
+
+            return $this->adminJson(['success' => true]);
+        } catch (\Exception $e) {
+            return $this->adminJson([
+                'success' => false,
+                'error' => $e->getMessage(),
+            ]);
         }
-
-        $tag->save();
-
-        return $this->adminJson(['success' => true]);
     }
 }
