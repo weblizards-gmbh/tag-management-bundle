@@ -17,6 +17,7 @@ use Symfony\Component\HttpFoundation\JsonResponse;
 use Symfony\Component\HttpFoundation\Request;
 use Symfony\Component\Routing\Annotation\Route;
 use Weblizards\TagManagementBundle\Model\Tag;
+use Weblizards\TagManagementBundle\Service\TagConfigDataBinder;
 
 /**
  * @Route("/admin/tag-management")
@@ -99,60 +100,17 @@ class TagManagementController extends AdminController
     /**
      * @Route("/update", name="weblizards_tagmanagement_update", methods={"PUT"}, options={"expose"=true})
      */
-    public function updateAction(Request $request): JsonResponse
+    public function updateAction(Request $request, TagConfigDataBinder $dataBinder): JsonResponse
     {
         $this->checkPermission('tag_snippet_management');
 
         $tag = Tag\Config::getByName($request->get('name'));
         $data = $this->decodeJson($request->get('configuration'));
 
-        $items = [];
-        foreach ($data as $key => $value) {
-            $setter = 'set' . ucfirst($key);
-            if (method_exists($tag, $setter)) {
-                $tag->{$setter}($value);
-            }
-
-            if (0 === strpos($key, 'item.')) {
-                $cleanKeyParts = explode('.', $key);
-
-                if ('date' == $cleanKeyParts[2]) {
-                    $date = $value;
-                    $value = null;
-
-                    if (!empty($date) && !empty($data[$cleanKeyParts[0] . '.' . $cleanKeyParts[1] . '.time'])) {
-                        $time = $data[$cleanKeyParts[0] . '.' . $cleanKeyParts[1] . '.time'];
-                        $time = explode('T', $time);
-                        $date = explode('T', $date);
-                        $value = strtotime($date[0] . 'T' . $time[1]);
-                    }
-                } elseif ('time' == $cleanKeyParts[2]) {
-                    continue;
-                }
-
-                $items[$cleanKeyParts[1]][$cleanKeyParts[2]] = $value;
-            }
-        }
-
-        $tag->resetItems();
-        foreach ($items as $item) {
-            $tag->addItem($item);
-        }
-
-        // parameters get/post
-        $params = [];
-        for ($i = 0; $i < 5; ++$i) {
-            if (isset($data['params.name' . $i])) {
-                $params[] = [
-                    'name' => $data['params.name' . $i],
-                    'value' => $data['params.value' . $i],
-                ];
-            }
-        }
-        $tag->setParams($params);
+        $dataBinder->bind($tag, $data);
 
         $oldName = $request->get('name');
-        $newName = $data['name'];
+        $newName = $tag->getName();
 
         try {
             if ($oldName !== $newName) {
