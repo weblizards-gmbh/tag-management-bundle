@@ -27,7 +27,7 @@ class Config extends Model\AbstractModel
 
     public string $description = '';
 
-    public string $siteId;
+    public ?string $siteId = null;
 
     public string $urlPattern = '';
 
@@ -35,7 +35,7 @@ class Config extends Model\AbstractModel
 
     public string $httpMethod = '';
 
-    public bool $disabled;
+    public bool $disabled = false;
 
     public array $params = [
         ['name' => '', 'value' => ''],
@@ -45,9 +45,9 @@ class Config extends Model\AbstractModel
         ['name' => '', 'value' => ''],
     ];
 
-    public int $modificationDate;
+    public ?int $modificationDate = null;
 
-    public int $creationDate;
+    public ?int $creationDate = null;
 
     public static function getByName(string $name): ?Config
     {
