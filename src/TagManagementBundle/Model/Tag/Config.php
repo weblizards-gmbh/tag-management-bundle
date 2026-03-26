@@ -157,12 +157,12 @@ class Config extends Model\AbstractModel
         return $this->urlPattern;
     }
 
-    public function setSiteId(string $siteId): void
+    public function setSiteId(?string $siteId): void
     {
         $this->siteId = $siteId;
     }
 
-    public function getSiteId(): string
+    public function getSiteId(): ?string
     {
         return $this->siteId;
     }
@@ -191,7 +191,7 @@ class Config extends Model\AbstractModel
         return $this->textPattern;
     }
 
-    public function getModificationDate(): int
+    public function getModificationDate(): ?int
     {
         return $this->modificationDate;
     }
@@ -201,7 +201,7 @@ class Config extends Model\AbstractModel
         $this->modificationDate = $modificationDate;
     }
 
-    public function getCreationDate(): int
+    public function getCreationDate(): ?int
     {
         return $this->creationDate;
     }
