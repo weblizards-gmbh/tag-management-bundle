@@ -65,6 +65,10 @@ Das Bundle ermöglicht es, HTML-Tags und Snippets (z.B. Google Analytics, Facebo
 
 Nach der Installation finden Sie den neuen Menüpunkt unter **Einstellungen > Tag & Snippet Management**.
 
+## Entwicklung und Tests
+
+Informationen dazu, wie das Bundle während der Entwicklung getestet und in eine Pimcore-Instanz eingebunden werden kann, finden Sie im [Development & Testing Guide](docs/development_testing.md).
+
 ## Lizenz
 
 Dieses Bundle steht unter der [GPL-3.0-or-later](LICENSE.md).
