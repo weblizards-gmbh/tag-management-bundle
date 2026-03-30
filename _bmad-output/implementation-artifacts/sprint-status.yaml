@@ -47,9 +47,9 @@ development_status:
   epic-1-retrospective: optional
 
   epic-2: backlog
-  2-1-modernes-html-parsing: ready-for-dev
+  2-1-modernes-html-parsing: review
   2-2-cache-layer-fuer-tag-config-listing: ready-for-dev
-  2-3-injektionslogik-und-data-binding-modernisieren: ready-for-dev
+  2-3-injektionslogik-und-data-binding-modernisieren: done
   epic-2-retrospective: optional
 
   epic-3: backlog
