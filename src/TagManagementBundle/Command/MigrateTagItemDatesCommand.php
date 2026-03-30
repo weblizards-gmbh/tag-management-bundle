@@ -10,50 +10,47 @@
  * @license    https://www.gnu.org/licenses/gpl-3.0.html  GNU General Public License version 3 (GPLv3)
  */
 
-namespace Weblizards\TagManagementBundle\Service;
+namespace Weblizards\TagManagementBundle\Command;
 
 use Carbon\Carbon;
+use Symfony\Component\Console\Command\Command;
+use Symfony\Component\Console\Input\InputInterface;
+use Symfony\Component\Console\Output\OutputInterface;
 use Weblizards\TagManagementBundle\Model\Tag\Config;
 
-class TagExpiryService
+class MigrateTagItemDatesCommand extends Command
 {
-    /**
-     * Disable expired tag items and persist changes.
-     *
-     * @return array{tags_updated:int, items_disabled:int}
-     */
-    public function disableExpiredItems(): array
+    protected static $defaultName = 'weblizards:tag-management:migrate-item-dates';
+    protected static $defaultDescription = 'Migrate tag item expiry dates to ISO-8601 UTC ("Z") format';
+
+    protected function execute(InputInterface $input, OutputInterface $output): int
     {
         $list = new Config\Listing();
         $tags = $list->load();
 
         $tagsUpdated = 0;
-        $itemsDisabled = 0;
-        $now = time();
+        $itemsUpdated = 0;
 
         /** @var Config $tag */
         foreach ($tags as $tag) {
-            $changed = false;
             $items = $tag->getItems();
-
             if (!is_array($items) || $items === []) {
                 continue;
             }
 
+            $changed = false;
+
             foreach ($items as $index => $item) {
-                // Expiry is stored as ISO-8601 UTC ("Z") or legacy epoch; interpret accordingly.
-                $expiryTimestamp = $this->resolveExpiryTimestamp($item['date'] ?? null);
-                if ($expiryTimestamp === null) {
+                if (!array_key_exists('date', $item)) {
                     continue;
                 }
 
-                if (!empty($item['disabled'])) {
-                    continue;
-                }
+                $original = $item['date'];
+                $normalized = $this->normalizeDateValue($original);
 
-                if ($now > $expiryTimestamp) {
-                    $items[$index]['disabled'] = true;
-                    $itemsDisabled++;
+                if ($normalized !== $original) {
+                    $items[$index]['date'] = $normalized;
+                    $itemsUpdated++;
                     $changed = true;
                 }
             }
@@ -65,13 +62,19 @@ class TagExpiryService
             }
         }
 
-        return [
-            'tags_updated' => $tagsUpdated,
-            'items_disabled' => $itemsDisabled,
-        ];
+        $output->writeln(sprintf(
+            'Tag items migrated. Tags updated: %d, items updated: %d.',
+            $tagsUpdated,
+            $itemsUpdated
+        ));
+
+        return Command::SUCCESS;
     }
 
-    private function resolveExpiryTimestamp($value): ?int
+    /**
+     * @return string|null
+     */
+    private function normalizeDateValue($value)
     {
         if (empty($value) || $value === '0' || $value === 0) {
             return null;
@@ -79,18 +82,21 @@ class TagExpiryService
 
         if (is_int($value) || (is_string($value) && ctype_digit($value))) {
             $timestamp = (int) $value;
+            if ($timestamp <= 0) {
+                return null;
+            }
 
-            return $timestamp > 0 ? $timestamp : null;
+            return Carbon::createFromTimestampUTC($timestamp)->format('Y-m-d\TH:i:s\Z');
         }
 
         if (is_string($value)) {
             try {
-                return Carbon::parse($value)->getTimestamp();
+                return Carbon::parse($value)->setTimezone('UTC')->format('Y-m-d\TH:i:s\Z');
             } catch (\Exception $e) {
-                return null;
+                return $value;
             }
         }
 
-        return null;
+        return $value;
     }
 }

@@ -213,8 +213,15 @@ pimcore.settings.tagmanagement.item = Class.create({
         }
         var myId = Ext.id();
 
-        if(data.date) {
-           data.date = new Date(data.date * 1000);
+        if (data.date) {
+            if (Ext.isNumber(data.date)) {
+                data.date = new Date(data.date * 1000);
+            } else if (Ext.isString(data.date)) {
+                var parsedDate = new Date(data.date);
+                if (!isNaN(parsedDate.getTime())) {
+                    data.date = parsedDate;
+                }
+            }
         }
 
         var item =  new Ext.Panel({
@@ -222,6 +229,7 @@ pimcore.settings.tagmanagement.item = Class.create({
             style: "margin: 10px 0 0 0",
             bodyStyle: "padding: 10px;",
             border: true,
+            tagItemId: myId,
             tbar: ["->",{
                 iconCls: "pimcore_icon_delete",
                 handler: function (myId) {
@@ -305,13 +313,75 @@ pimcore.settings.tagmanagement.item = Class.create({
 
     save: function () {
 
-        var formValues = this.panel.getForm().getFieldValues();
-        formValues.name = this.data.name;
+        var form = this.panel.getForm();
+
+        var payload = {
+            name: this.data.name,
+            description: form.findField("description").getValue(),
+            disabled: form.findField("disabled").getValue(),
+            siteId: form.findField("siteId").getValue(),
+            urlPattern: form.findField("urlPattern").getValue(),
+            textPattern: form.findField("textPattern").getValue(),
+            httpMethod: form.findField("httpMethod").getValue(),
+            items: [],
+            params: []
+        };
+
+        // Params: build array of {name, value}
+        for (var i = 0; i < 5; i++) {
+            var nameField = form.findField("params.name" + i);
+            var valueField = form.findField("params.value" + i);
+            if (!nameField) {
+                continue;
+            }
+
+            var paramName = nameField.getValue();
+            if (paramName) {
+                payload.params.push({
+                    name: paramName,
+                    value: valueField ? valueField.getValue() : ""
+                });
+            }
+        }
+
+        // Items: build structured array from item panels
+        this.itemContainer.items.each(function (itemPanel) {
+            if (!itemPanel.tagItemId) {
+                return;
+            }
+
+            var prefix = "item." + itemPanel.tagItemId + ".";
+            var dateField = form.findField(prefix + "date");
+            var timeField = form.findField(prefix + "time");
+            var dateValue = dateField ? dateField.getValue() : null;
+            var timeValue = timeField ? timeField.getValue() : null;
+            var timestamp = null;
+
+            // Store expiry as ISO-8601 UTC (Zulu, trailing "Z") to avoid timezone ambiguity.
+            if (dateValue instanceof Date && timeValue instanceof Date) {
+                var combined = new Date(dateValue.getTime());
+                combined.setHours(timeValue.getHours());
+                combined.setMinutes(timeValue.getMinutes());
+                combined.setSeconds(timeValue.getSeconds());
+                combined.setMilliseconds(0);
+                timestamp = combined.toISOString();
+            }
+
+            payload.items.push({
+                code: form.findField(prefix + "code").getValue(),
+                element: form.findField(prefix + "element").getValue(),
+                position: form.findField(prefix + "position").getValue(),
+                disabled: form.findField(prefix + "disabled").getValue(),
+                enabledInEditmode: form.findField(prefix + "enabledInEditmode").getValue(),
+                date: timestamp
+            });
+        });
+
         Ext.Ajax.request({
             url: Routing.generate('weblizards_tagmanagement_update'),
             method: "PUT",
             params: {
-                configuration: Ext.encode(formValues),
+                configuration: Ext.encode(payload),
                 name: this.data.name
             },
             success: this.saveOnComplete.bind(this)

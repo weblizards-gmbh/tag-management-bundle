@@ -44,6 +44,8 @@ class TagConfigDataBinder
             'urlPattern',
             'textPattern',
             'httpMethod',
+            'items',
+            'params',
         ];
 
         foreach ($allowedKeys as $key) {
@@ -52,63 +54,14 @@ class TagConfigDataBinder
             }
         }
 
-        $payload['items'] = $this->buildItems($data);
-        $payload['params'] = $this->buildParams($data);
+        if (array_key_exists('items', $payload) && !is_array($payload['items'])) {
+            $payload['items'] = [];
+        }
+        if (array_key_exists('params', $payload) && !is_array($payload['params'])) {
+            $payload['params'] = [];
+        }
 
         return $payload;
     }
 
-    private function buildItems(array $data): array
-    {
-        $items = [];
-
-        foreach ($data as $key => $value) {
-            if (0 !== strpos($key, 'item.')) {
-                continue;
-            }
-
-            $parts = explode('.', $key, 3);
-            if (3 !== count($parts)) {
-                continue;
-            }
-
-            if ('time' === $parts[2]) {
-                continue;
-            }
-
-            if ('date' === $parts[2]) {
-                $date = $value;
-                $value = null;
-
-                $timeKey = $parts[0] . '.' . $parts[1] . '.time';
-                if (!empty($date) && !empty($data[$timeKey])) {
-                    $time = explode('T', $data[$timeKey]);
-                    $date = explode('T', $date);
-                    $value = strtotime($date[0] . 'T' . $time[1]);
-                }
-            }
-
-            $items[$parts[1]][$parts[2]] = $value;
-        }
-
-        return array_values($items);
-    }
-
-    private function buildParams(array $data): array
-    {
-        $params = [];
-        $index = 0;
-
-        while (isset($data['params.name' . $index]) || isset($data['params.value' . $index])) {
-            if (isset($data['params.name' . $index])) {
-                $params[] = [
-                    'name' => $data['params.name' . $index],
-                    'value' => $data['params.value' . $index] ?? '',
-                ];
-            }
-            ++$index;
-        }
-
-        return $params;
-    }
 }

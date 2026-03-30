@@ -76,9 +76,11 @@ class TagInjectionService
                             continue;
                         }
 
+                        // Expiry is stored as ISO-8601 UTC ("Z") or legacy epoch; interpret accordingly.
                         $currentTime = new \Carbon\Carbon();
+                        $expiryTimestamp = $this->resolveExpiryTimestamp($item['date'] ?? null);
 
-                        if (!empty($item['date']) && $currentTime->getTimestamp() > $item['date']) {
+                        if ($expiryTimestamp !== null && $currentTime->getTimestamp() > $expiryTimestamp) {
                             // Skip expired items. Persistence is handled by a dedicated service/job.
                             continue;
                         }
@@ -113,5 +115,28 @@ class TagInjectionService
         }
 
         return $content;
+    }
+
+    private function resolveExpiryTimestamp($value): ?int
+    {
+        if (empty($value) || $value === '0' || $value === 0) {
+            return null;
+        }
+
+        if (is_int($value) || (is_string($value) && ctype_digit($value))) {
+            $timestamp = (int) $value;
+
+            return $timestamp > 0 ? $timestamp : null;
+        }
+
+        if (is_string($value)) {
+            try {
+                return \Carbon\Carbon::parse($value)->getTimestamp();
+            } catch (\Exception $e) {
+                return null;
+            }
+        }
+
+        return null;
     }
 }
