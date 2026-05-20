@@ -424,7 +424,7 @@ pimcore.settings.tagmanagement.item = Class.create({
         });
 
         Ext.Ajax.request({
-            url: Routing.generate('weblizards_tagmanagement_update'),
+            url: pimcore.plugin.WeblizardsTagManagementBundle.route('weblizards_tagmanagement_update'),
             method: "PUT",
             params: {
                 configuration: Ext.encode(payload),

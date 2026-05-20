@@ -57,7 +57,7 @@ pimcore.settings.tagmanagement.panel = Class.create({
                 autoSync: true,
                 proxy: {
                     type: 'ajax',
-                    url: Routing.generate('weblizards_tagmanagement_tree'),
+                    url: pimcore.plugin.WeblizardsTagManagementBundle.route('weblizards_tagmanagement_tree'),
                     reader: {
                         type: 'json'
                     }
@@ -145,7 +145,7 @@ pimcore.settings.tagmanagement.panel = Class.create({
         }
 
         Ext.Ajax.request({
-            url: Routing.generate('weblizards_tagmanagement_get'),
+            url: pimcore.plugin.WeblizardsTagManagementBundle.route('weblizards_tagmanagement_get'),
             params: {
                 name: id
             },
@@ -196,7 +196,7 @@ pimcore.settings.tagmanagement.panel = Class.create({
             }
 
             Ext.Ajax.request({
-                url: Routing.generate('weblizards_tagmanagement_add'),
+                url: pimcore.plugin.WeblizardsTagManagementBundle.route('weblizards_tagmanagement_add'),
                 method: 'POST',
                 params: {
                     name: value
@@ -224,7 +224,7 @@ pimcore.settings.tagmanagement.panel = Class.create({
 
     deleteField: function (tree, record) {
         Ext.Ajax.request({
-            url: Routing.generate('weblizards_tagmanagement_delete'),
+            url: pimcore.plugin.WeblizardsTagManagementBundle.route('weblizards_tagmanagement_delete'),
             method: 'DELETE',
             params: {
                 name: record.data.id
