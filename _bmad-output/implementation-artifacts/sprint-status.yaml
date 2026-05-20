@@ -53,7 +53,7 @@ development_status:
   epic-2-retrospective: optional
 
   epic-3: backlog
-  3-1-dynamische-parameter-modernes-request-handling: ready-for-dev
+  3-1-dynamische-parameter-modernes-request-handling: done
   3-2-konsistente-keys-benennungen-mit-rollender-umstellung: ready-for-dev
   3-3-admin-ui-umbenennen-php-8-typsierung: ready-for-dev
   epic-3-retrospective: optional

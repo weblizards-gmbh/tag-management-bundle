@@ -37,13 +37,8 @@ class Config extends Model\AbstractModel
 
     public bool $disabled = false;
 
-    public array $params = [
-        ['name' => '', 'value' => ''],
-        ['name' => '', 'value' => ''],
-        ['name' => '', 'value' => ''],
-        ['name' => '', 'value' => ''],
-        ['name' => '', 'value' => ''],
-    ];
+    // Params start empty; the admin UI adds rows dynamically instead of relying on fixed placeholder slots.
+    public array $params = [];
 
     public ?int $modificationDate = null;
 

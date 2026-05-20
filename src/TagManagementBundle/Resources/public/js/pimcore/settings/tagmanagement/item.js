@@ -18,6 +18,7 @@ pimcore.settings.tagmanagement.item = Class.create({
         this.parentPanel = parentPanel;
         this.data = data;
         this.currentIndex = 0;
+        this.currentParamIndex = 0;
 
         this.addLayout();
 
@@ -56,34 +57,27 @@ pimcore.settings.tagmanagement.item = Class.create({
             border: false
         });
 
-        var paramsFieldSetItems = [];
+        this.paramContainer = new Ext.Panel({
+            border: false,
+            items: [],
+            tbar: ["->", {
+                iconCls: "pimcore_icon_add",
+                handler: this.addParam.bind(this)
+            }]
+        });
 
-        for(var i = 0; i < 5; i++) {
-            paramsFieldSetItems.push({
-                xtype: "fieldset",
-                layout: "hbox",
-                style: "border-top: none !important",
-                border: false,
-                padding: 0,
-                items: [{
-                    xtype: "textfield",
-                    fieldLabel: t("wl_tagmanagement.name"),
-                    name: "params.name" + i,
-                    value: (this.data.params && this.data.params[i]) ? this.data.params[i]["name"] : ""
-                },{
-                    xtype: "textfield",
-                    margin: '0 0 0 20',
-                    fieldLabel: t("wl_tagmanagement.value"),
-                    name: "params.value" + i,
-                    value: (this.data.params && this.data.params[i]) ? this.data.params[i]["value"] : ""
-                }]
-            });
+        if (this.data.params && this.data.params.length > 0) {
+            for (var i = 0; i < this.data.params.length; i++) {
+                this.addParam(this.data.params[i]);
+            }
+        } else {
+            this.addParam();
         }
 
         var paramsFieldSet = {
             xtype: "fieldset",
             title: t("wl_tagmanagement.parameters") + " (GET &amp; POST)",
-            items: paramsFieldSetItems,
+            items: [this.paramContainer],
             collapsible: true,
             collapsed: true
         };
@@ -204,6 +198,44 @@ pimcore.settings.tagmanagement.item = Class.create({
         this.parentPanel.getEditPanel().setActiveTab(this.panel);
 
         pimcore.layout.refresh();
+    },
+
+    addParam: function (data) {
+        data = data || {};
+
+        var myId = Ext.id();
+        var param = new Ext.Panel({
+            id: myId,
+            border: false,
+            layout: "hbox",
+            style: "border-top: none !important",
+            padding: 0,
+            tagParamId: myId,
+            items: [{
+                xtype: "textfield",
+                fieldLabel: t("wl_tagmanagement.name"),
+                name: "param." + myId + ".name",
+                value: data.name || ""
+            },{
+                xtype: "textfield",
+                margin: "0 0 0 20",
+                fieldLabel: t("wl_tagmanagement.value"),
+                name: "param." + myId + ".value",
+                value: data.value || ""
+            },{
+                xtype: "button",
+                margin: "0 0 0 10",
+                iconCls: "pimcore_icon_delete",
+                handler: function (paramId) {
+                    this.paramContainer.remove(Ext.getCmp(paramId));
+                    this.paramContainer.updateLayout();
+                }.bind(this, myId)
+            }]
+        });
+
+        this.paramContainer.add(param);
+        this.paramContainer.updateLayout();
+        this.currentParamIndex++;
     },
 
 
@@ -327,22 +359,24 @@ pimcore.settings.tagmanagement.item = Class.create({
             params: []
         };
 
-        // Params: build array of {name, value}
-        for (var i = 0; i < 5; i++) {
-            var nameField = form.findField("params.name" + i);
-            var valueField = form.findField("params.value" + i);
-            if (!nameField) {
-                continue;
+        // Params are persisted as a dynamic list; there is intentionally no fixed 5-slot limit anymore.
+        this.paramContainer.items.each(function (paramPanel) {
+            if (!paramPanel.tagParamId) {
+                return;
             }
 
-            var paramName = nameField.getValue();
+            var prefix = "param." + paramPanel.tagParamId + ".";
+            var nameField = form.findField(prefix + "name");
+            var valueField = form.findField(prefix + "value");
+            var paramName = nameField ? nameField.getValue() : "";
+
             if (paramName) {
                 payload.params.push({
                     name: paramName,
                     value: valueField ? valueField.getValue() : ""
                 });
             }
-        }
+        });
 
         // Items: build structured array from item panels
         this.itemContainer.items.each(function (itemPanel) {
