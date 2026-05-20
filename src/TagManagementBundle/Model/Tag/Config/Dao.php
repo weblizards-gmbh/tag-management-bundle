@@ -12,41 +12,46 @@
 
 namespace Weblizards\TagManagementBundle\Model\Tag\Config;
 
+use Pimcore\Cache;
 use Pimcore\Model;
+use Weblizards\TagManagementBundle\Model\Tag\TagConfigNormalizer;
 
 /**
  * @property \Weblizards\TagManagementBundle\Model\Tag\Config $model
  */
 class Dao extends Model\Dao\PhpArrayTable
 {
-    public function configure()
+    public function configure(): void
     {
         parent::configure();
         $this->setFile('tag-manager');
     }
 
     /**
-     * @param null|string $id
-     *
-     * @throws \Exception
+     * Load one tag config and normalize legacy/canonical keys before hydrating the model.
      */
-    public function getByName($id = null)
+    public function getByName(?string $id = null): bool
     {
-        if (null != $id) {
+        if (null !== $id) {
             $this->model->setName($id);
         }
 
         $data = $this->db->getById($this->model->getName());
 
-        if (isset($data['id'])) {
-            $this->assignVariablesToModel($data);
-            $this->model->setName($data['id']);
-        } else {
-            throw new \Exception('Tag with id: ' . $this->model->getName() . ' does not exist');
+        if (!isset($data['id'])) {
+            return false;
         }
+
+        $data = TagConfigNormalizer::normalizeForModel($data);
+        $this->assignVariablesToModel($data);
+        $this->model->setName($data['name']);
+
+        return true;
     }
 
     /**
+     * Persist the config in normalized snake_case storage format while keeping the model API stable.
+     *
      * @throws \Exception
      */
     public function save(): void
@@ -57,23 +62,15 @@ class Dao extends Model\Dao\PhpArrayTable
         }
         $this->model->setModificationDate($ts);
 
-        $dataRaw = $this->model->getObjectVars();
-        $data = [];
-        $allowedProperties = ['name', 'description', 'disabled', 'items', 'siteId', 'urlPattern', 'textPattern',
-            'httpMethod', 'params', 'creationDate', 'modificationDate', ];
-
-        foreach ($dataRaw as $key => $value) {
-            if (in_array($key, $allowedProperties)) {
-                $data[$key] = $value;
-            }
-        }
+        $data = TagConfigNormalizer::normalizeForStorage($this->model->getObjectVars());
         $this->db->insertOrUpdate($data, $this->model->getName());
+        Cache::clearTags(['tagmanagement', 'output']);
     }
 
     /**
      * Deletes object from database.
      */
-    public function delete()
+    public function delete(): void
     {
         $this->db->delete($this->model->getName());
     }

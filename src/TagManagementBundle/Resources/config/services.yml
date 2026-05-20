@@ -26,3 +26,12 @@ services:
 #
 #    Weblizards\TagManagementBundle\Config:
 #        public: true
+
+    # Services
+    Weblizards\TagManagementBundle\Service\HtmlInsertionService: ~
+
+    Weblizards\TagManagementBundle\Service\TagConfigDataBinder: ~
+
+    Weblizards\TagManagementBundle\Service\TagExpiryService: ~
+
+    Weblizards\TagManagementBundle\Service\TagInjectionService: ~

@@ -57,7 +57,7 @@ pimcore.settings.tagmanagement.panel = Class.create({
                 autoSync: true,
                 proxy: {
                     type: 'ajax',
-                    url: Routing.generate('weblizards_tagmanagement_tree'),
+                    url: pimcore.plugin.WeblizardsTagManagementBundle.route('weblizards_tagmanagement_tree'),
                     reader: {
                         type: 'json'
                     }
@@ -145,12 +145,17 @@ pimcore.settings.tagmanagement.panel = Class.create({
         }
 
         Ext.Ajax.request({
-            url: Routing.generate('weblizards_tagmanagement_get'),
+            url: pimcore.plugin.WeblizardsTagManagementBundle.route('weblizards_tagmanagement_get'),
             params: {
                 name: id
             },
             success: function (response) {
                 var data = Ext.decode(response.responseText);
+                if (!data || data.success === false) {
+                    Ext.Msg.alert(' ', (data && data.error) ? data.error : t('wl_tagmanagement.failed_to_create_new_item'));
+                    this.tree.getStore().load();
+                    return;
+                }
 
                 var fieldPanel = new pimcore.settings.tagmanagement.item(data, this);
                 pimcore.layout.refresh();
@@ -191,7 +196,7 @@ pimcore.settings.tagmanagement.panel = Class.create({
             }
 
             Ext.Ajax.request({
-                url: Routing.generate('weblizards_tagmanagement_add'),
+                url: pimcore.plugin.WeblizardsTagManagementBundle.route('weblizards_tagmanagement_add'),
                 method: 'POST',
                 params: {
                     name: value
@@ -219,7 +224,7 @@ pimcore.settings.tagmanagement.panel = Class.create({
 
     deleteField: function (tree, record) {
         Ext.Ajax.request({
-            url: Routing.generate('weblizards_tagmanagement_delete'),
+            url: pimcore.plugin.WeblizardsTagManagementBundle.route('weblizards_tagmanagement_delete'),
             method: 'DELETE',
             params: {
                 name: record.data.id

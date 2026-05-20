@@ -18,6 +18,7 @@ pimcore.settings.tagmanagement.item = Class.create({
         this.parentPanel = parentPanel;
         this.data = data;
         this.currentIndex = 0;
+        this.currentParamIndex = 0;
 
         this.addLayout();
 
@@ -56,34 +57,27 @@ pimcore.settings.tagmanagement.item = Class.create({
             border: false
         });
 
-        var paramsFieldSetItems = [];
+        this.paramContainer = new Ext.Panel({
+            border: false,
+            items: [],
+            tbar: ["->", {
+                iconCls: "pimcore_icon_add",
+                handler: this.addParam.bind(this)
+            }]
+        });
 
-        for(var i = 0; i < 5; i++) {
-            paramsFieldSetItems.push({
-                xtype: "fieldset",
-                layout: "hbox",
-                style: "border-top: none !important",
-                border: false,
-                padding: 0,
-                items: [{
-                    xtype: "textfield",
-                    fieldLabel: t("wl_tagmanagement.name"),
-                    name: "params.name" + i,
-                    value: (this.data.params && this.data.params[i]) ? this.data.params[i]["name"] : ""
-                },{
-                    xtype: "textfield",
-                    margin: '0 0 0 20',
-                    fieldLabel: t("wl_tagmanagement.value"),
-                    name: "params.value" + i,
-                    value: (this.data.params && this.data.params[i]) ? this.data.params[i]["value"] : ""
-                }]
-            });
+        if (this.data.params && this.data.params.length > 0) {
+            for (var i = 0; i < this.data.params.length; i++) {
+                this.addParam(this.data.params[i]);
+            }
+        } else {
+            this.addParam();
         }
 
         var paramsFieldSet = {
             xtype: "fieldset",
             title: t("wl_tagmanagement.parameters") + " (GET &amp; POST)",
-            items: paramsFieldSetItems,
+            items: [this.paramContainer],
             collapsible: true,
             collapsed: true
         };
@@ -102,7 +96,7 @@ pimcore.settings.tagmanagement.item = Class.create({
                 value: this.data.name,
                 fieldLabel: t("wl_tagmanagement.name"),
                 width: 450,
-                disabled: true
+                allowBlank: false
             },{
                 xtype: "textarea",
                 name: "description",
@@ -206,6 +200,44 @@ pimcore.settings.tagmanagement.item = Class.create({
         pimcore.layout.refresh();
     },
 
+    addParam: function (data) {
+        data = data || {};
+
+        var myId = Ext.id();
+        var param = new Ext.Panel({
+            id: myId,
+            border: false,
+            layout: "hbox",
+            style: "border-top: none !important",
+            padding: 0,
+            tagParamId: myId,
+            items: [{
+                xtype: "textfield",
+                fieldLabel: t("wl_tagmanagement.name"),
+                name: "param." + myId + ".name",
+                value: data.name || ""
+            },{
+                xtype: "textfield",
+                margin: "0 0 0 20",
+                fieldLabel: t("wl_tagmanagement.value"),
+                name: "param." + myId + ".value",
+                value: data.value || ""
+            },{
+                xtype: "button",
+                margin: "0 0 0 10",
+                iconCls: "pimcore_icon_delete",
+                handler: function (paramId) {
+                    this.paramContainer.remove(Ext.getCmp(paramId));
+                    this.paramContainer.updateLayout();
+                }.bind(this, myId)
+            }]
+        });
+
+        this.paramContainer.add(param);
+        this.paramContainer.updateLayout();
+        this.currentParamIndex++;
+    },
+
 
     addItem: function (data) {
         if(typeof data == "undefined") {
@@ -213,8 +245,15 @@ pimcore.settings.tagmanagement.item = Class.create({
         }
         var myId = Ext.id();
 
-        if(data.date) {
-           data.date = new Date(data.date * 1000);
+        if (data.date) {
+            if (Ext.isNumber(data.date)) {
+                data.date = new Date(data.date * 1000);
+            } else if (Ext.isString(data.date)) {
+                var parsedDate = new Date(data.date);
+                if (!isNaN(parsedDate.getTime())) {
+                    data.date = parsedDate;
+                }
+            }
         }
 
         var item =  new Ext.Panel({
@@ -222,6 +261,7 @@ pimcore.settings.tagmanagement.item = Class.create({
             style: "margin: 10px 0 0 0",
             bodyStyle: "padding: 10px;",
             border: true,
+            tagItemId: myId,
             tbar: ["->",{
                 iconCls: "pimcore_icon_delete",
                 handler: function (myId) {
@@ -305,22 +345,137 @@ pimcore.settings.tagmanagement.item = Class.create({
 
     save: function () {
 
-        var formValues = this.panel.getForm().getFieldValues();
-        formValues.name = this.data.name;
+        var form = this.panel.getForm();
+        var requestedName = form.findField("name").getValue();
+
+        // Mirror the backend naming rules client-side so invalid renames fail before the request.
+        if (!this.isValidTagName(requestedName)) {
+            Ext.Msg.alert(' ', t('wl_tagmanagement.failed_to_create_new_item'));
+            return;
+        }
+
+        if (this.isDuplicateTagName(requestedName)) {
+            Ext.Msg.alert(' ', t('wl_tagmanagement.name_already_in_use'));
+            return;
+        }
+
+        var payload = {
+            name: requestedName,
+            description: form.findField("description").getValue(),
+            disabled: form.findField("disabled").getValue(),
+            siteId: form.findField("siteId").getValue(),
+            urlPattern: form.findField("urlPattern").getValue(),
+            textPattern: form.findField("textPattern").getValue(),
+            httpMethod: form.findField("httpMethod").getValue(),
+            items: [],
+            params: []
+        };
+
+        // Params are persisted as a dynamic list; there is intentionally no fixed 5-slot limit anymore.
+        this.paramContainer.items.each(function (paramPanel) {
+            if (!paramPanel.tagParamId) {
+                return;
+            }
+
+            var prefix = "param." + paramPanel.tagParamId + ".";
+            var nameField = form.findField(prefix + "name");
+            var valueField = form.findField(prefix + "value");
+            var paramName = nameField ? nameField.getValue() : "";
+
+            if (paramName) {
+                payload.params.push({
+                    name: paramName,
+                    value: valueField ? valueField.getValue() : ""
+                });
+            }
+        });
+
+        // Items: build structured array from item panels
+        this.itemContainer.items.each(function (itemPanel) {
+            if (!itemPanel.tagItemId) {
+                return;
+            }
+
+            var prefix = "item." + itemPanel.tagItemId + ".";
+            var dateField = form.findField(prefix + "date");
+            var timeField = form.findField(prefix + "time");
+            var dateValue = dateField ? dateField.getValue() : null;
+            var timeValue = timeField ? timeField.getValue() : null;
+            var timestamp = null;
+
+            // Store expiry as ISO-8601 UTC (Zulu, trailing "Z") to avoid timezone ambiguity.
+            if (dateValue instanceof Date && timeValue instanceof Date) {
+                var combined = new Date(dateValue.getTime());
+                combined.setHours(timeValue.getHours());
+                combined.setMinutes(timeValue.getMinutes());
+                combined.setSeconds(timeValue.getSeconds());
+                combined.setMilliseconds(0);
+                timestamp = combined.toISOString();
+            }
+
+            payload.items.push({
+                code: form.findField(prefix + "code").getValue(),
+                element: form.findField(prefix + "element").getValue(),
+                position: form.findField(prefix + "position").getValue(),
+                disabled: form.findField(prefix + "disabled").getValue(),
+                enabledInEditmode: form.findField(prefix + "enabledInEditmode").getValue(),
+                date: timestamp
+            });
+        });
+
         Ext.Ajax.request({
-            url: Routing.generate('weblizards_tagmanagement_update'),
+            url: pimcore.plugin.WeblizardsTagManagementBundle.route('weblizards_tagmanagement_update'),
             method: "PUT",
             params: {
-                configuration: Ext.encode(formValues),
+                configuration: Ext.encode(payload),
                 name: this.data.name
             },
             success: this.saveOnComplete.bind(this)
         });
     },
 
-    saveOnComplete: function () {
+    saveOnComplete: function (response) {
+        var result = Ext.decode(response.responseText);
+        if (!result || !result.success) {
+            Ext.Msg.alert(' ', (result && result.error) ? result.error : t("wl_tagmanagement.failed_to_create_new_item"));
+            return;
+        }
+
+        var newName = result.id || this.panel.getForm().findField("name").getValue();
+        var oldName = this.data.name;
+
+        this.data.name = newName;
         this.parentPanel.tree.getStore().load();
+
+        if (oldName !== newName) {
+            // Re-open the tab under the new key so panel ids stay aligned with the renamed config.
+            this.parentPanel.getEditPanel().remove(this.panel);
+            this.parentPanel.openTag(newName);
+        }
+
         pimcore.helpers.showNotification(t("wl_tagmanagement.success"), t("wl_tagmanagement.saved_successfully"), "success");
+    },
+
+    isValidTagName: function (value) {
+        value = Ext.String.trim(value || "");
+
+        return value.length > 0 && /^[a-zA-Z0-9_-]+$/.test(value);
+    },
+
+    isDuplicateTagName: function (value) {
+        value = Ext.String.trim(value || "");
+        if (value === this.data.name) {
+            return false;
+        }
+
+        var tags = this.parentPanel.tree.getRootNode().childNodes;
+        for (var i = 0; i < tags.length; i++) {
+            if (tags[i].text === value) {
+                return true;
+            }
+        }
+
+        return false;
     },
 
     getCurrentIndex: function () {

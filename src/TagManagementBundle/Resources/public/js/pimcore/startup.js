@@ -40,4 +40,26 @@ pimcore.plugin.WeblizardsTagManagementBundle = Class.create(pimcore.plugin.admin
     }
 });
 
+// Prefer the global Routing object when the admin setup exposes it (for example via FOSJsRoutingBundle).
+// Fall back to the bundle's stable admin paths so the UI keeps working without introducing a hard dependency.
+pimcore.plugin.WeblizardsTagManagementBundle.route = function (name) {
+    if (typeof Routing !== "undefined" && Routing && typeof Routing.generate === "function") {
+        return Routing.generate(name);
+    }
+
+    var fallbackRoutes = {
+        weblizards_tagmanagement_tree: "/admin/tag-management/tree",
+        weblizards_tagmanagement_get: "/admin/tag-management/get",
+        weblizards_tagmanagement_add: "/admin/tag-management/add",
+        weblizards_tagmanagement_update: "/admin/tag-management/update",
+        weblizards_tagmanagement_delete: "/admin/tag-management/delete"
+    };
+
+    if (!fallbackRoutes[name]) {
+        throw new Error("Unknown tag management route: " + name);
+    }
+
+    return fallbackRoutes[name];
+};
+
 var WeblizardsTagManagementBundlePlugin = new pimcore.plugin.WeblizardsTagManagementBundle();

@@ -3,10 +3,17 @@
 namespace Weblizards\TagManagementBundle;
 
 use Pimcore\Extension\Bundle\AbstractPimcoreBundle;
+use Pimcore\Extension\Bundle\PimcoreBundleAdminClassicInterface;
+use Pimcore\Extension\Bundle\Traits\BundleAdminClassicTrait;
 
-class WeblizardsTagManagementBundle extends AbstractPimcoreBundle
+class WeblizardsTagManagementBundle extends AbstractPimcoreBundle implements PimcoreBundleAdminClassicInterface
 {
-    public function getJsPaths()
+    use BundleAdminClassicTrait;
+
+    /**
+     * Register classic admin assets via the Pimcore 11-compatible admin-classic interface.
+     */
+    public function getJsPaths(): array
     {
         return [
             '/bundles/weblizardstagmanagement/js/pimcore/startup.js',
@@ -20,12 +27,12 @@ class WeblizardsTagManagementBundle extends AbstractPimcoreBundle
 //        return $this->container->get(Installer::class);
 //    }
 
-    public function getDescription()
+    public function getDescription(): string
     {
         return 'Tag and Snippet Management';
     }
 
-    public function getVersion()
+    public function getVersion(): string
     {
         return '1.0';
     }

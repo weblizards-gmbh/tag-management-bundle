@@ -12,6 +12,7 @@
 
 namespace Weblizards\TagManagementBundle\Model\Tag\Config;
 
+use Pimcore\Cache;
 use Pimcore\Model;
 use Weblizards\TagManagementBundle\Model\Tag\Config;
 
@@ -32,7 +33,16 @@ class Listing extends Model\Listing\JsonListing
     public function getTags(): array
     {
         if (null === $this->tags) {
+            $cacheKey = $this->getCacheKey();
+            $cached = Cache::load($cacheKey);
+            if (false !== $cached) {
+                $this->tags = $cached;
+
+                return $this->tags;
+            }
+
             $this->getDao()->load();
+            Cache::save($this->tags, $cacheKey, ['tagmanagement']);
         }
 
         return $this->tags;
@@ -48,5 +58,13 @@ class Listing extends Model\Listing\JsonListing
         $this->tags = $tags;
 
         return $this;
+    }
+
+    private function getCacheKey(): string
+    {
+        return 'tagmanagement_config_listing_' . md5(serialize([
+            $this->getFilter(),
+            $this->getOrder(),
+        ]));
     }
 }

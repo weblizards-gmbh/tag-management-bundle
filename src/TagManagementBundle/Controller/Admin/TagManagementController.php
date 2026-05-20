@@ -12,17 +12,24 @@
 
 namespace Weblizards\TagManagementBundle\Controller\Admin;
 
-use Pimcore\Bundle\AdminBundle\Controller\AdminController;
+use Pimcore\Controller\Traits\JsonHelperTrait;
+use Pimcore\Controller\UserAwareController;
+use Pimcore\Model\Translation;
 use Symfony\Component\HttpFoundation\JsonResponse;
 use Symfony\Component\HttpFoundation\Request;
 use Symfony\Component\Routing\Annotation\Route;
 use Weblizards\TagManagementBundle\Model\Tag;
+use Weblizards\TagManagementBundle\Service\TagConfigDataBinder;
 
 /**
  * @Route("/admin/tag-management")
  */
-class TagManagementController extends AdminController
+class TagManagementController extends UserAwareController
 {
+    use JsonHelperTrait;
+
+    private const TAG_NAME_PATTERN = '/^[a-zA-Z0-9_-]+$/';
+
     /**
      * @Route("/tree", name="weblizards_tagmanagement_tree", methods={"GET", "POST"}, options={"expose"=true})
      */
@@ -42,7 +49,7 @@ class TagManagementController extends AdminController
             ];
         }
 
-        return $this->adminJson($tags);
+        return $this->jsonResponse($tags);
     }
 
     /**
@@ -55,18 +62,26 @@ class TagManagementController extends AdminController
         $this->checkPermission('tag_snippet_management');
 
         $success = false;
+        $name = $this->normalizeTagName($request->get('name'));
 
-        $tag = Tag\Config::getByName($request->get('name'));
+        if (!$this->isValidTagName($name)) {
+            return $this->jsonResponse([
+                'success' => false,
+                'error' => $this->translateAdmin('wl_tagmanagement.invalid_tag_name'),
+            ]);
+        }
+
+        $tag = Tag\Config::getByName($name);
 
         if (!$tag) {
             $tag = new Tag\Config();
-            $tag->setName($request->get('name'));
+            $tag->setName($name);
             $tag->save();
 
             $success = true;
         }
 
-        return $this->adminJson(['success' => $success, 'id' => $tag->getName()]);
+        return $this->jsonResponse(['success' => $success, 'id' => $tag->getName()]);
     }
 
     /**
@@ -81,7 +96,7 @@ class TagManagementController extends AdminController
             $tag->delete();
         }
 
-        return $this->adminJson(['success' => true]);
+        return $this->jsonResponse(['success' => true]);
     }
 
     /**
@@ -91,74 +106,98 @@ class TagManagementController extends AdminController
     {
         $this->checkPermission('tag_snippet_management');
 
-        $tag = Tag\Config::getByName($request->get('name'));
+        $tag = Tag\Config::getByName($this->normalizeTagName($request->get('name')));
+        if ($tag === null) {
+            return $this->jsonResponse([
+                'success' => false,
+                'error' => $this->translateAdmin('wl_tagmanagement.tag_not_found'),
+            ]);
+        }
 
-        return $this->adminJson($tag);
+        return $this->jsonResponse($tag);
     }
 
     /**
      * @Route("/update", name="weblizards_tagmanagement_update", methods={"PUT"}, options={"expose"=true})
      */
-    public function updateAction(Request $request): JsonResponse
+    public function updateAction(Request $request, TagConfigDataBinder $dataBinder): JsonResponse
     {
         $this->checkPermission('tag_snippet_management');
 
-        $tag = Tag\Config::getByName($request->get('name'));
+        $oldName = $this->normalizeTagName($request->get('name'));
+        $tag = Tag\Config::getByName($oldName);
+        if ($tag === null) {
+            return $this->jsonResponse([
+                'success' => false,
+                'error' => $this->translateAdmin('wl_tagmanagement.tag_not_found'),
+            ]);
+        }
+
         $data = $this->decodeJson($request->get('configuration'));
 
-        $items = [];
-        foreach ($data as $key => $value) {
-            $setter = 'set' . ucfirst($key);
-            if (method_exists($tag, $setter)) {
-                $tag->{$setter}($value);
-            }
+        $dataBinder->bind($tag, $data);
 
-            if (0 === strpos($key, 'item.')) {
-                $cleanKeyParts = explode('.', $key);
+        $newName = $this->normalizeTagName($tag->getName());
 
-                if ('date' == $cleanKeyParts[2]) {
-                    $date = $value;
-                    $value = null;
+        if (!$this->isValidTagName($newName)) {
+            return $this->jsonResponse([
+                'success' => false,
+                'error' => $this->translateAdmin('wl_tagmanagement.invalid_tag_name'),
+            ]);
+        }
 
-                    if (!empty($date) && !empty($data[$cleanKeyParts[0] . '.' . $cleanKeyParts[1] . '.time'])) {
-                        $time = $data[$cleanKeyParts[0] . '.' . $cleanKeyParts[1] . '.time'];
-                        $time = explode('T', $time);
-                        $date = explode('T', $date);
-                        $value = strtotime($date[0] . 'T' . $time[1]);
-                    }
-                } elseif ('time' == $cleanKeyParts[2]) {
-                    continue;
+        if ($oldName !== $newName && Tag\Config::getByName($newName) !== null) {
+            return $this->jsonResponse([
+                'success' => false,
+                'error' => $this->translateAdmin('wl_tagmanagement.name_already_in_use'),
+            ]);
+        }
+
+        try {
+            if ($oldName !== $newName) {
+                // First write under the new name, then delete the old one to avoid data loss on failure.
+                $tag->setName($newName);
+                $tag->save();
+
+                $oldTag = Tag\Config::getByName($oldName);
+                if ($oldTag) {
+                    $oldTag->delete();
                 }
-
-                $items[$cleanKeyParts[1]][$cleanKeyParts[2]] = $value;
+            } else {
+                $tag->save();
             }
+
+            return $this->jsonResponse([
+                'success' => true,
+                'id' => $newName,
+            ]);
+        } catch (\Exception $e) {
+            return $this->jsonResponse([
+                'success' => false,
+                'error' => $e->getMessage(),
+            ]);
         }
+    }
 
-        $tag->resetItems();
-        foreach ($items as $item) {
-            $tag->addItem($item);
-        }
+    /**
+     * Keep admin-side validation aligned with the ExtJS UI so invalid rename requests fail server-side too.
+     */
+    private function isValidTagName(string $name): bool
+    {
+        return $name !== '' && preg_match(self::TAG_NAME_PATTERN, $name) === 1;
+    }
 
-        // parameters get/post
-        $params = [];
-        for ($i = 0; $i < 5; ++$i) {
-            if (isset($data['params.name' . $i])) {
-                $params[] = [
-                    'name' => $data['params.name' . $i],
-                    'value' => $data['params.value' . $i],
-                ];
-            }
-        }
-        $tag->setParams($params);
+    private function normalizeTagName(?string $name): string
+    {
+        // Keep server-side rename checks consistent with the add-dialog and ExtJS save flow.
+        return trim((string) $name);
+    }
 
-        if ($request->get('name') != $data['name']) {
-            $tag->setName($request->get('name')); // set the old name again, so that the old file get's deleted
-            $tag->delete(); // delete the old config / file
-            $tag->setName($data['name']);
-        }
-
-        $tag->save();
-
-        return $this->adminJson(['success' => true]);
+    /**
+     * Resolve admin translation keys for JSON error responses consumed by the ExtJS backend UI.
+     */
+    private function translateAdmin(string $key): string
+    {
+        return $this->trans($key, [], Translation::DOMAIN_ADMIN);
     }
 }
