@@ -12,7 +12,8 @@
 
 namespace Weblizards\TagManagementBundle\Controller\Admin;
 
-use Pimcore\Bundle\AdminBundle\Controller\AdminController;
+use Pimcore\Controller\Traits\JsonHelperTrait;
+use Pimcore\Controller\UserAwareController;
 use Pimcore\Model\Translation;
 use Symfony\Component\HttpFoundation\JsonResponse;
 use Symfony\Component\HttpFoundation\Request;
@@ -23,8 +24,10 @@ use Weblizards\TagManagementBundle\Service\TagConfigDataBinder;
 /**
  * @Route("/admin/tag-management")
  */
-class TagManagementController extends AdminController
+class TagManagementController extends UserAwareController
 {
+    use JsonHelperTrait;
+
     private const TAG_NAME_PATTERN = '/^[a-zA-Z0-9_-]+$/';
 
     /**
@@ -46,7 +49,7 @@ class TagManagementController extends AdminController
             ];
         }
 
-        return $this->adminJson($tags);
+        return $this->jsonResponse($tags);
     }
 
     /**
@@ -62,7 +65,7 @@ class TagManagementController extends AdminController
         $name = $this->normalizeTagName($request->get('name'));
 
         if (!$this->isValidTagName($name)) {
-            return $this->adminJson([
+            return $this->jsonResponse([
                 'success' => false,
                 'error' => $this->translateAdmin('wl_tagmanagement.invalid_tag_name'),
             ]);
@@ -78,7 +81,7 @@ class TagManagementController extends AdminController
             $success = true;
         }
 
-        return $this->adminJson(['success' => $success, 'id' => $tag->getName()]);
+        return $this->jsonResponse(['success' => $success, 'id' => $tag->getName()]);
     }
 
     /**
@@ -93,7 +96,7 @@ class TagManagementController extends AdminController
             $tag->delete();
         }
 
-        return $this->adminJson(['success' => true]);
+        return $this->jsonResponse(['success' => true]);
     }
 
     /**
@@ -105,13 +108,13 @@ class TagManagementController extends AdminController
 
         $tag = Tag\Config::getByName($this->normalizeTagName($request->get('name')));
         if ($tag === null) {
-            return $this->adminJson([
+            return $this->jsonResponse([
                 'success' => false,
                 'error' => $this->translateAdmin('wl_tagmanagement.tag_not_found'),
             ]);
         }
 
-        return $this->adminJson($tag);
+        return $this->jsonResponse($tag);
     }
 
     /**
@@ -124,7 +127,7 @@ class TagManagementController extends AdminController
         $oldName = $this->normalizeTagName($request->get('name'));
         $tag = Tag\Config::getByName($oldName);
         if ($tag === null) {
-            return $this->adminJson([
+            return $this->jsonResponse([
                 'success' => false,
                 'error' => $this->translateAdmin('wl_tagmanagement.tag_not_found'),
             ]);
@@ -137,14 +140,14 @@ class TagManagementController extends AdminController
         $newName = $this->normalizeTagName($tag->getName());
 
         if (!$this->isValidTagName($newName)) {
-            return $this->adminJson([
+            return $this->jsonResponse([
                 'success' => false,
                 'error' => $this->translateAdmin('wl_tagmanagement.invalid_tag_name'),
             ]);
         }
 
         if ($oldName !== $newName && Tag\Config::getByName($newName) !== null) {
-            return $this->adminJson([
+            return $this->jsonResponse([
                 'success' => false,
                 'error' => $this->translateAdmin('wl_tagmanagement.name_already_in_use'),
             ]);
@@ -164,12 +167,12 @@ class TagManagementController extends AdminController
                 $tag->save();
             }
 
-            return $this->adminJson([
+            return $this->jsonResponse([
                 'success' => true,
                 'id' => $newName,
             ]);
         } catch (\Exception $e) {
-            return $this->adminJson([
+            return $this->jsonResponse([
                 'success' => false,
                 'error' => $e->getMessage(),
             ]);

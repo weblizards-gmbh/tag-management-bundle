@@ -3,9 +3,16 @@
 namespace Weblizards\TagManagementBundle;
 
 use Pimcore\Extension\Bundle\AbstractPimcoreBundle;
+use Pimcore\Extension\Bundle\PimcoreBundleAdminClassicInterface;
+use Pimcore\Extension\Bundle\Traits\BundleAdminClassicTrait;
 
-class WeblizardsTagManagementBundle extends AbstractPimcoreBundle
+class WeblizardsTagManagementBundle extends AbstractPimcoreBundle implements PimcoreBundleAdminClassicInterface
 {
+    use BundleAdminClassicTrait;
+
+    /**
+     * Register classic admin assets via the Pimcore 11-compatible admin-classic interface.
+     */
     public function getJsPaths(): array
     {
         return [
