@@ -30,10 +30,10 @@ class TagManagerListener implements EventSubscriberInterface
     use PreviewRequestTrait;
 
     /** @var bool */
-    protected $enabled = true;
+    protected bool $enabled = true;
 
     /** @var EditmodeResolver */
-    private $editmodeResolver;
+    private EditmodeResolver $editmodeResolver;
 
     private TagInjectionService $injectionService;
 
@@ -43,7 +43,7 @@ class TagManagerListener implements EventSubscriberInterface
         $this->injectionService = $injectionService;
     }
 
-    public static function getSubscribedEvents()
+    public static function getSubscribedEvents(): array
     {
         return [
             KernelEvents::RESPONSE => 'onKernelResponse',
@@ -53,7 +53,7 @@ class TagManagerListener implements EventSubscriberInterface
     /**
      * @return bool
      */
-    public function disable()
+    public function disable(): bool
     {
         $this->enabled = false;
 
@@ -63,7 +63,7 @@ class TagManagerListener implements EventSubscriberInterface
     /**
      * @return bool
      */
-    public function enable()
+    public function enable(): bool
     {
         $this->enabled = true;
 
@@ -73,12 +73,12 @@ class TagManagerListener implements EventSubscriberInterface
     /**
      * @return bool
      */
-    public function isEnabled()
+    public function isEnabled(): bool
     {
         return $this->enabled;
     }
 
-    public function onKernelResponse(ResponseEvent $event)
+    public function onKernelResponse(ResponseEvent $event): void
     {
         $request = $event->getRequest();
         if (!$event->isMainRequest()) {

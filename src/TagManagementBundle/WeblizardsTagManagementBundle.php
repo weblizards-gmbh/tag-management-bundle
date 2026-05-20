@@ -6,7 +6,7 @@ use Pimcore\Extension\Bundle\AbstractPimcoreBundle;
 
 class WeblizardsTagManagementBundle extends AbstractPimcoreBundle
 {
-    public function getJsPaths()
+    public function getJsPaths(): array
     {
         return [
             '/bundles/weblizardstagmanagement/js/pimcore/startup.js',
@@ -20,12 +20,12 @@ class WeblizardsTagManagementBundle extends AbstractPimcoreBundle
 //        return $this->container->get(Installer::class);
 //    }
 
-    public function getDescription()
+    public function getDescription(): string
     {
         return 'Tag and Snippet Management';
     }
 
-    public function getVersion()
+    public function getVersion(): string
     {
         return '1.0';
     }

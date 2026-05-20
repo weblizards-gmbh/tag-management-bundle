@@ -21,7 +21,7 @@ use Weblizards\TagManagementBundle\Model\Tag\TagConfigNormalizer;
  */
 class Dao extends Model\Dao\PhpArrayTable
 {
-    public function configure()
+    public function configure(): void
     {
         parent::configure();
         $this->setFile('tag-manager');
@@ -70,7 +70,7 @@ class Dao extends Model\Dao\PhpArrayTable
     /**
      * Deletes object from database.
      */
-    public function delete()
+    public function delete(): void
     {
         $this->db->delete($this->model->getName());
     }

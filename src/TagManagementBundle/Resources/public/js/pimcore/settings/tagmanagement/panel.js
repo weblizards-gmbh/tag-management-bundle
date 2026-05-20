@@ -151,6 +151,11 @@ pimcore.settings.tagmanagement.panel = Class.create({
             },
             success: function (response) {
                 var data = Ext.decode(response.responseText);
+                if (!data || data.success === false) {
+                    Ext.Msg.alert(' ', (data && data.error) ? data.error : t('wl_tagmanagement.failed_to_create_new_item'));
+                    this.tree.getStore().load();
+                    return;
+                }
 
                 var fieldPanel = new pimcore.settings.tagmanagement.item(data, this);
                 pimcore.layout.refresh();

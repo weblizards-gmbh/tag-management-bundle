@@ -96,7 +96,7 @@ pimcore.settings.tagmanagement.item = Class.create({
                 value: this.data.name,
                 fieldLabel: t("wl_tagmanagement.name"),
                 width: 450,
-                disabled: true
+                allowBlank: false
             },{
                 xtype: "textarea",
                 name: "description",
@@ -346,9 +346,21 @@ pimcore.settings.tagmanagement.item = Class.create({
     save: function () {
 
         var form = this.panel.getForm();
+        var requestedName = form.findField("name").getValue();
+
+        // Mirror the backend naming rules client-side so invalid renames fail before the request.
+        if (!this.isValidTagName(requestedName)) {
+            Ext.Msg.alert(' ', t('wl_tagmanagement.failed_to_create_new_item'));
+            return;
+        }
+
+        if (this.isDuplicateTagName(requestedName)) {
+            Ext.Msg.alert(' ', t('wl_tagmanagement.name_already_in_use'));
+            return;
+        }
 
         var payload = {
-            name: this.data.name,
+            name: requestedName,
             description: form.findField("description").getValue(),
             disabled: form.findField("disabled").getValue(),
             siteId: form.findField("siteId").getValue(),
@@ -422,9 +434,48 @@ pimcore.settings.tagmanagement.item = Class.create({
         });
     },
 
-    saveOnComplete: function () {
+    saveOnComplete: function (response) {
+        var result = Ext.decode(response.responseText);
+        if (!result || !result.success) {
+            Ext.Msg.alert(' ', (result && result.error) ? result.error : t("wl_tagmanagement.failed_to_create_new_item"));
+            return;
+        }
+
+        var newName = result.id || this.panel.getForm().findField("name").getValue();
+        var oldName = this.data.name;
+
+        this.data.name = newName;
         this.parentPanel.tree.getStore().load();
+
+        if (oldName !== newName) {
+            // Re-open the tab under the new key so panel ids stay aligned with the renamed config.
+            this.parentPanel.getEditPanel().remove(this.panel);
+            this.parentPanel.openTag(newName);
+        }
+
         pimcore.helpers.showNotification(t("wl_tagmanagement.success"), t("wl_tagmanagement.saved_successfully"), "success");
+    },
+
+    isValidTagName: function (value) {
+        value = Ext.String.trim(value || "");
+
+        return value.length > 0 && /^[a-zA-Z0-9_-]+$/.test(value);
+    },
+
+    isDuplicateTagName: function (value) {
+        value = Ext.String.trim(value || "");
+        if (value === this.data.name) {
+            return false;
+        }
+
+        var tags = this.parentPanel.tree.getRootNode().childNodes;
+        for (var i = 0; i < tags.length; i++) {
+            if (tags[i].text === value) {
+                return true;
+            }
+        }
+
+        return false;
     },
 
     getCurrentIndex: function () {
