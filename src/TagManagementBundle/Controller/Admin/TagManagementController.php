@@ -13,6 +13,7 @@
 namespace Weblizards\TagManagementBundle\Controller\Admin;
 
 use Pimcore\Bundle\AdminBundle\Controller\AdminController;
+use Pimcore\Model\Translation;
 use Symfony\Component\HttpFoundation\JsonResponse;
 use Symfony\Component\HttpFoundation\Request;
 use Symfony\Component\Routing\Annotation\Route;
@@ -63,7 +64,7 @@ class TagManagementController extends AdminController
         if (!$this->isValidTagName($name)) {
             return $this->adminJson([
                 'success' => false,
-                'error' => 'Invalid tag name.',
+                'error' => $this->translateAdmin('wl_tagmanagement.invalid_tag_name'),
             ]);
         }
 
@@ -106,7 +107,7 @@ class TagManagementController extends AdminController
         if ($tag === null) {
             return $this->adminJson([
                 'success' => false,
-                'error' => 'Tag not found.',
+                'error' => $this->translateAdmin('wl_tagmanagement.tag_not_found'),
             ]);
         }
 
@@ -125,7 +126,7 @@ class TagManagementController extends AdminController
         if ($tag === null) {
             return $this->adminJson([
                 'success' => false,
-                'error' => 'Tag not found.',
+                'error' => $this->translateAdmin('wl_tagmanagement.tag_not_found'),
             ]);
         }
 
@@ -138,14 +139,14 @@ class TagManagementController extends AdminController
         if (!$this->isValidTagName($newName)) {
             return $this->adminJson([
                 'success' => false,
-                'error' => 'Invalid tag name.',
+                'error' => $this->translateAdmin('wl_tagmanagement.invalid_tag_name'),
             ]);
         }
 
         if ($oldName !== $newName && Tag\Config::getByName($newName) !== null) {
             return $this->adminJson([
                 'success' => false,
-                'error' => 'Tag name already in use.',
+                'error' => $this->translateAdmin('wl_tagmanagement.name_already_in_use'),
             ]);
         }
 
@@ -187,5 +188,13 @@ class TagManagementController extends AdminController
     {
         // Keep server-side rename checks consistent with the add-dialog and ExtJS save flow.
         return trim((string) $name);
+    }
+
+    /**
+     * Resolve admin translation keys for JSON error responses consumed by the ExtJS backend UI.
+     */
+    private function translateAdmin(string $key): string
+    {
+        return $this->trans($key, [], Translation::DOMAIN_ADMIN);
     }
 }
