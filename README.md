@@ -86,4 +86,4 @@ Informationen dazu, wie das Bundle während der Entwicklung getestet und in eine
 Dieses Bundle steht unter der [GPL-3.0-or-later](LICENSE.md).
 
 ---
-Entwickelt von [Weblizards GmbH](https://www.weblizards.de).
+Entwickelt von [pimcore](https://pimcore.com/) und weiterentwickelt von [Weblizards GmbH](https://www.weblizards.de).
