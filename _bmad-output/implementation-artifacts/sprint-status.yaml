@@ -54,8 +54,8 @@ development_status:
 
   epic-3: backlog
   3-1-dynamische-parameter-modernes-request-handling: done
-  3-2-konsistente-keys-benennungen-mit-rollender-umstellung: ready-for-dev
-  3-3-admin-ui-umbenennen-php-8-typsierung: ready-for-dev
+  3-2-konsistente-keys-benennungen-mit-rollender-umstellung: done
+  3-3-admin-ui-umbenennen-php-8-typsierung: in-progress
   epic-3-retrospective: optional
 
   epic-4: backlog

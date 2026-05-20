@@ -15,6 +15,7 @@ namespace Weblizards\TagManagementBundle\Model\Tag\Config\Listing;
 use Pimcore\Model;
 use Weblizards\TagManagementBundle\Model\Tag\Config;
 use Weblizards\TagManagementBundle\Model\Tag\Config\Listing;
+use Weblizards\TagManagementBundle\Model\Tag\TagConfigNormalizer;
 
 /**
  * @property Listing $model
@@ -28,12 +29,17 @@ class Dao extends Model\Dao\PhpArrayTable
     }
 
     /**
+     * Load matching tag configs and keep filter/order handling compatible with normalized storage keys.
+     *
      * @throws \Exception
      */
     public function load(): array
     {
         $properties = [];
-        $propertiesData = $this->db->fetchAll($this->model->getFilter(), $this->model->getOrder());
+        $propertiesData = $this->db->fetchAll(
+            $this->normalizeFieldMap($this->model->getFilter()),
+            $this->normalizeFieldMap($this->model->getOrder())
+        );
 
         foreach ($propertiesData as $propertyData) {
             $property = Config::getByName($propertyData['id']);
@@ -49,8 +55,25 @@ class Dao extends Model\Dao\PhpArrayTable
 
     public function getTotalCount(): int
     {
-        $data = $this->db->fetchAll($this->model->getFilter(), $this->model->getOrder());
+        $data = $this->db->fetchAll(
+            $this->normalizeFieldMap($this->model->getFilter()),
+            $this->normalizeFieldMap($this->model->getOrder())
+        );
 
         return count($data);
+    }
+
+    /**
+     * Normalize filter/order maps so callers can keep using model field names during the migration.
+     */
+    private function normalizeFieldMap(array $fieldMap): array
+    {
+        $normalized = [];
+
+        foreach ($fieldMap as $field => $value) {
+            $normalized[TagConfigNormalizer::normalizeFieldNameForStorage((string) $field)] = $value;
+        }
+
+        return $normalized;
     }
 }

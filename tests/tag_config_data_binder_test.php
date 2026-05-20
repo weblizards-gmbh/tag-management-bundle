@@ -5,6 +5,7 @@ declare(strict_types=1);
 use Symfony\Component\Serializer\Normalizer\ObjectNormalizer;
 use Symfony\Component\Serializer\Serializer;
 use Weblizards\TagManagementBundle\Model\Tag\Config;
+use Weblizards\TagManagementBundle\Model\Tag\TagConfigNormalizer;
 use Weblizards\TagManagementBundle\Service\TagConfigDataBinder;
 
 require_once __DIR__ . '/../vendor/autoload.php';
@@ -102,3 +103,80 @@ $binder->bind($legacyWithoutTimeTag, $legacyWithoutTimeData);
 $legacyWithoutTimeItems = $legacyWithoutTimeTag->getItems();
 assert(count($legacyWithoutTimeItems) === 1, 'Expected legacy item without time to be supported.');
 assert($legacyWithoutTimeItems[0]['date'] === '2026-02-24T23:59:59+00:00', 'Expected missing legacy time to default to end of day.');
+
+$snakeCaseTag = new Config();
+$snakeCaseData = [
+    'name' => 'snake-case',
+    'temporarily_disabled' => '1',
+    'site_id' => 'default',
+    'url_pattern' => '/snake/',
+    'text_pattern' => 'text',
+    'http_method' => 'POST',
+    'items' => [
+        [
+            'element' => 'head',
+            'position' => 'end',
+            'code' => '<script>snake</script>',
+            'temporarily_disabled' => false,
+            'enabled_in_editmode' => true,
+        ],
+    ],
+];
+
+$binder->bind($snakeCaseTag, $snakeCaseData);
+
+assert($snakeCaseTag->isDisabled() === true, 'Expected temporarily_disabled alias to map to disabled.');
+assert($snakeCaseTag->getSiteId() === 'default', 'Expected snake_case site_id to map to siteId.');
+assert($snakeCaseTag->getUrlPattern() === '/snake/', 'Expected snake_case url_pattern to map to urlPattern.');
+assert($snakeCaseTag->getTextPattern() === 'text', 'Expected snake_case text_pattern to map to textPattern.');
+assert($snakeCaseTag->getHttpMethod() === 'POST', 'Expected snake_case http_method to map to httpMethod.');
+assert($snakeCaseTag->getItems()[0]['enabledInEditmode'] === true, 'Expected enabled_in_editmode alias to map to enabledInEditmode.');
+
+$formattedCodeTag = new Config();
+$formattedCodeData = [
+    'name' => 'formatted-code',
+    'items' => [
+        [
+            'code' => "  \n<script>\n  console.log('keep formatting');\n</script>\n  ",
+            'element' => 'body',
+            'position' => 'end',
+        ],
+    ],
+];
+
+$binder->bind($formattedCodeTag, $formattedCodeData);
+
+assert(
+    $formattedCodeTag->getItems()[0]['code'] === "  \n<script>\n  console.log('keep formatting');\n</script>\n  ",
+    'Expected snippet code formatting to be preserved verbatim.'
+);
+
+$normalizedStorage = TagConfigNormalizer::normalizeForStorage([
+    'name' => 'normalized',
+    'description' => 'desc',
+    'disabled' => false,
+    'siteId' => 'default',
+    'urlPattern' => '/normalized/',
+    'textPattern' => 'needle',
+    'httpMethod' => 'GET',
+    'items' => [
+        [
+            'code' => '<script>normalized</script>',
+            'element' => 'body',
+            'position' => 'end',
+            'disabled' => false,
+            'enabledInEditmode' => true,
+            'date' => '2026-02-24T12:30:00.000Z',
+        ],
+    ],
+    'params' => [
+        ['name' => 'foo', 'value' => 'bar'],
+    ],
+]);
+
+assert(array_key_exists('site_id', $normalizedStorage), 'Expected storage payload to use snake_case site_id.');
+assert(array_key_exists('url_pattern', $normalizedStorage), 'Expected storage payload to use snake_case url_pattern.');
+assert(array_key_exists('http_method', $normalizedStorage), 'Expected storage payload to use snake_case http_method.');
+assert(array_key_exists('enabled_in_editmode', $normalizedStorage['items'][0]), 'Expected item storage payload to use snake_case enabled_in_editmode.');
+assert(TagConfigNormalizer::normalizeFieldNameForStorage('siteId') === 'site_id', 'Expected field aliases to normalize to snake_case storage keys.');
+assert(TagConfigNormalizer::normalizeFieldNameForStorage('disabled') === 'disabled', 'Expected canonical disabled field to remain unchanged.');

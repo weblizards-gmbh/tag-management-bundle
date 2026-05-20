@@ -14,6 +14,7 @@ namespace Weblizards\TagManagementBundle\Service;
 
 use Symfony\Component\Serializer\SerializerInterface;
 use Weblizards\TagManagementBundle\Model\Tag\Config;
+use Weblizards\TagManagementBundle\Model\Tag\TagConfigNormalizer;
 
 class TagConfigDataBinder
 {
@@ -33,26 +34,12 @@ class TagConfigDataBinder
         ]);
     }
 
+    /**
+     * Merge canonical payloads and legacy aliases into one serializer-friendly config structure.
+     */
     private function buildPayload(array $data): array
     {
-        $payload = [];
-        $allowedKeys = [
-            'name',
-            'description',
-            'disabled',
-            'siteId',
-            'urlPattern',
-            'textPattern',
-            'httpMethod',
-            'items',
-            'params',
-        ];
-
-        foreach ($allowedKeys as $key) {
-            if (array_key_exists($key, $data)) {
-                $payload[$key] = $data[$key];
-            }
-        }
+        $payload = TagConfigNormalizer::normalizeForModel($data, false);
 
         $payload['items'] = $this->extractItems($data, $payload['items'] ?? null);
         $payload['params'] = $this->extractParams($data, $payload['params'] ?? null);
@@ -60,6 +47,9 @@ class TagConfigDataBinder
         return $payload;
     }
 
+    /**
+     * Accept structured items and the historical flat `item.<id>.<field>` payload during migration.
+     */
     private function extractItems(array $data, mixed $items): array
     {
         if (is_array($items)) {
@@ -91,6 +81,9 @@ class TagConfigDataBinder
         )));
     }
 
+    /**
+     * Accept structured params and the historical flat `params.nameN`/`params.valueN` payload.
+     */
     private function extractParams(array $data, mixed $params): array
     {
         if (is_array($params)) {
@@ -120,22 +113,24 @@ class TagConfigDataBinder
         )));
     }
 
+    /**
+     * Normalize one incoming item to the canonical runtime shape expected by the Config model.
+     */
     private function normalizeItem(mixed $item): ?array
     {
         if (!is_array($item)) {
             return null;
         }
 
-        return [
-            'code' => (string) ($item['code'] ?? ''),
-            'element' => (string) ($item['element'] ?? ''),
-            'position' => (string) ($item['position'] ?? ''),
-            'disabled' => (bool) ($item['disabled'] ?? false),
-            'enabledInEditmode' => (bool) ($item['enabledInEditmode'] ?? false),
-            'date' => $this->normalizeExpiryDate($item['date'] ?? null),
-        ];
+        $normalized = TagConfigNormalizer::normalizeItemForModel($item);
+        $normalized['date'] = $this->normalizeExpiryDate($normalized['date'] ?? null);
+
+        return $normalized;
     }
 
+    /**
+     * Upgrade one legacy flat item payload, including the old split date/time expiry fields.
+     */
     private function normalizeLegacyItem(array $item): ?array
     {
         $normalizedItem = $this->normalizeItem($item);
@@ -155,23 +150,26 @@ class TagConfigDataBinder
         return $normalizedItem;
     }
 
+    /**
+     * Filter empty params and normalize accepted aliases into the canonical pair shape.
+     */
     private function normalizeParam(mixed $param): ?array
     {
         if (!is_array($param)) {
             return null;
         }
 
-        $name = trim((string) ($param['name'] ?? ''));
-        if ($name == '') {
+        $normalizedParams = TagConfigNormalizer::normalizeParamsForModel([$param]);
+        if ($normalizedParams === []) {
             return null;
         }
 
-        return [
-            'name' => $name,
-            'value' => (string) ($param['value'] ?? ''),
-        ];
+        return $normalizedParams[0];
     }
 
+    /**
+     * Keep empty values nullable while preserving already-normalized ISO strings as-is.
+     */
     private function normalizeExpiryDate(mixed $value): ?string
     {
         if ($value === null) {
@@ -187,6 +185,9 @@ class TagConfigDataBinder
         return (string) $value;
     }
 
+    /**
+     * Combine historical split date/time fields into one ISO-8601 timestamp.
+     */
     private function combineLegacyDateAndTime(string $date, string $time): ?string
     {
         $date = trim($date);
