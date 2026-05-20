@@ -12,6 +12,7 @@
 
 namespace Weblizards\TagManagementBundle\Service;
 
+use Carbon\Carbon;
 use Weblizards\TagManagementBundle\Model\Tag\Config;
 
 class TagExpiryService
@@ -40,7 +41,9 @@ class TagExpiryService
             }
 
             foreach ($items as $index => $item) {
-                if (empty($item['date'])) {
+                // Expiry is stored as ISO-8601 UTC ("Z") or legacy epoch; interpret accordingly.
+                $expiryTimestamp = $this->resolveExpiryTimestamp($item['date'] ?? null);
+                if ($expiryTimestamp === null) {
                     continue;
                 }
 
@@ -48,7 +51,7 @@ class TagExpiryService
                     continue;
                 }
 
-                if ($now > (int) $item['date']) {
+                if ($now > $expiryTimestamp) {
                     $items[$index]['disabled'] = true;
                     $itemsDisabled++;
                     $changed = true;
@@ -66,5 +69,28 @@ class TagExpiryService
             'tags_updated' => $tagsUpdated,
             'items_disabled' => $itemsDisabled,
         ];
+    }
+
+    private function resolveExpiryTimestamp($value): ?int
+    {
+        if (empty($value) || $value === '0' || $value === 0) {
+            return null;
+        }
+
+        if (is_int($value) || (is_string($value) && ctype_digit($value))) {
+            $timestamp = (int) $value;
+
+            return $timestamp > 0 ? $timestamp : null;
+        }
+
+        if (is_string($value)) {
+            try {
+                return Carbon::parse($value)->getTimestamp();
+            } catch (\Exception $e) {
+                return null;
+            }
+        }
+
+        return null;
     }
 }

@@ -65,6 +65,22 @@ Das Bundle ermöglicht es, HTML-Tags und Snippets (z.B. Google Analytics, Facebo
 
 Nach der Installation finden Sie den neuen Menüpunkt unter **Einstellungen > Tag & Snippet Management**.
 
+## Admin-Routing / FOS-Routes
+
+Im Pimcore-Admin nutzt das Bundle bevorzugt `Routing.generate(...)`, wenn im jeweiligen Setup eine kompatible Routing-Basis bereitgestellt wird. Eine harte Abhaengigkeit auf FOSJsRouting besteht jedoch nicht: fuer die eigenen Admin-Endpunkte existiert ein interner Fallback auf stabile Bundle-Pfade unter `/admin/tag-management/...`.
+
+Das bedeutet:
+
+- Ist eine globale JS-Routing-Basis vorhanden, wird sie weiter genutzt.
+- Ist sie nicht vorhanden, bleibt das Bundle fuer seine eigenen Admin-Requests funktionsfaehig.
+- Andere Bundles oder globale Routing-Setups werden dadurch nicht beeinflusst.
+
+Damit ist die Routing-Basis fuer den Admin-Bereich dokumentiert und so vorbereitet, dass spaetere Pimcore-/Routing-Aenderungen ohne groesseren Umbau aufgenommen werden koennen.
+
+## Entwicklung und Tests
+
+Informationen dazu, wie das Bundle während der Entwicklung getestet und in eine Pimcore-Instanz eingebunden werden kann, finden Sie im [Development & Testing Guide](docs/development_testing.md).
+
 ## Lizenz
 
 Dieses Bundle steht unter der [GPL-3.0-or-later](LICENSE.md).

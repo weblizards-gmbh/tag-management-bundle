@@ -27,7 +27,7 @@ class Config extends Model\AbstractModel
 
     public string $description = '';
 
-    public string $siteId;
+    public ?string $siteId = null;
 
     public string $urlPattern = '';
 
@@ -35,19 +35,14 @@ class Config extends Model\AbstractModel
 
     public string $httpMethod = '';
 
-    public bool $disabled;
+    public bool $disabled = false;
 
-    public array $params = [
-        ['name' => '', 'value' => ''],
-        ['name' => '', 'value' => ''],
-        ['name' => '', 'value' => ''],
-        ['name' => '', 'value' => ''],
-        ['name' => '', 'value' => ''],
-    ];
+    // Params start empty; the admin UI adds rows dynamically instead of relying on fixed placeholder slots.
+    public array $params = [];
 
-    public int $modificationDate;
+    public ?int $modificationDate = null;
 
-    public int $creationDate;
+    public ?int $creationDate = null;
 
     public static function getByName(string $name): ?Config
     {
@@ -157,12 +152,12 @@ class Config extends Model\AbstractModel
         return $this->urlPattern;
     }
 
-    public function setSiteId(string $siteId): void
+    public function setSiteId(?string $siteId): void
     {
         $this->siteId = $siteId;
     }
 
-    public function getSiteId(): string
+    public function getSiteId(): ?string
     {
         return $this->siteId;
     }
@@ -191,7 +186,7 @@ class Config extends Model\AbstractModel
         return $this->textPattern;
     }
 
-    public function getModificationDate(): int
+    public function getModificationDate(): ?int
     {
         return $this->modificationDate;
     }
@@ -201,7 +196,7 @@ class Config extends Model\AbstractModel
         $this->modificationDate = $modificationDate;
     }
 
-    public function getCreationDate(): int
+    public function getCreationDate(): ?int
     {
         return $this->creationDate;
     }
