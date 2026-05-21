@@ -18,8 +18,6 @@ use Weblizards\TagManagementBundle\Model\Tag\Config;
 
 /**
  * @method \Weblizards\TagManagementBundle\Model\Tag\Config\Listing\Dao getDao()
- * @method Config[]                                                     load()
- * @method int                                                          getTotalCount()
  */
 class Listing extends Model\AbstractModel
 {

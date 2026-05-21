@@ -117,7 +117,7 @@ final class TagConfigNormalizer
      *
      * @return array<int, array<string, mixed>>
      */
-    public static function normalizeItemsForModel($items): array
+    public static function normalizeItemsForModel(mixed $items): array
     {
         if (!is_array($items)) {
             return [];
@@ -151,7 +151,7 @@ final class TagConfigNormalizer
      *
      * @return array<int, array{name:string, value:string}>
      */
-    public static function normalizeParamsForModel($params): array
+    public static function normalizeParamsForModel(mixed $params): array
     {
         if (!is_array($params)) {
             return [];
