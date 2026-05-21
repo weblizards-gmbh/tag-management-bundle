@@ -2,7 +2,18 @@
     "name": "weblizards/tag-management-bundle",
     "type": "pimcore-bundle",
     "description": "Re-introduces the 'Tag and Snippet Management' feature which was deprecated in Pimcore 6.x and removed in Pimcore 10.",
+    "keywords": [
+        "pimcore",
+        "pimcore-bundle",
+        "tag-management",
+        "snippet-management"
+    ],
+    "homepage": "https://github.com/weblizards-gmbh/tag-management-bundle",
     "license": "GPL-3.0-or-later",
+    "support": {
+        "issues": "https://github.com/weblizards-gmbh/tag-management-bundle/issues",
+        "source": "https://github.com/weblizards-gmbh/tag-management-bundle"
+    },
     "authors": [
         {
             "name": "Weblizards GmbH",
@@ -10,15 +21,33 @@
         }
     ],
     "require": {
+        "php": ">=8.2",
         "pimcore/pimcore": "^11.0",
         "nesbot/carbon": "^2.0",
         "symfony/dom-crawler": "^6.4",
         "symfony/css-selector": "^7.4",
         "masterminds/html5": "^2.7"
     },
+    "require-dev": {
+        "phpunit/phpunit": "^10.5"
+    },
     "autoload": {
         "psr-4": {
             "Weblizards\\TagManagementBundle\\": "src/TagManagementBundle"
         }
+    },
+    "autoload-dev": {
+        "psr-4": {
+            "Weblizards\\TagManagementBundle\\Test\\": "tests"
+        }
+    },
+    "scripts": {
+        "test": "vendor/bin/phpunit"
+    },
+    "config": {
+        "allow-plugins": {
+            "pimcore/composer-php-codesniffer": true
+        },
+        "sort-packages": true
     }
 }
