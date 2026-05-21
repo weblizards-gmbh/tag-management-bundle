@@ -10,13 +10,39 @@
  */
 
 pimcore.registerNS("pimcore.plugin.WeblizardsTagManagementBundle");
-pimcore.plugin.WeblizardsTagManagementBundle = Class.create(pimcore.plugin.admin, {
+pimcore.plugin.WeblizardsTagManagementBundle = Class.create({
     getClassName: function () {
         return "pimcore.plugin.WeblizardsTagManagementBundle";
     },
 
     initialize: function () {
-        pimcore.plugin.broker.registerPlugin(this);
+        // if the new event exists, we use this
+        if (pimcore.events.preMenuBuild) {
+            document.addEventListener(pimcore.events.preMenuBuild, this.preMenuBuild.bind(this));
+        } else {
+            document.addEventListener(pimcore.events.pimcoreReady, this.pimcoreReady.bind(this));
+        }
+    },
+
+    preMenuBuild: function (e) {
+        const user = pimcore.globalmanager.get("user");
+        if (user.isAllowed("tag_snippet_management")) {
+            let menu = e.detail.menu;
+
+            menu.marketing.items.push({
+                text: t("wl_tagmanagement.tag_snippet_management"),
+                iconCls: "pimcore_icon_tag",
+                handler: function () {
+                    try {
+                        pimcore.globalmanager.get("tagmanagement").activate();
+                    }
+                    catch (e) {
+                        pimcore.globalmanager.add("tagmanagement", new pimcore.settings.tagmanagement.panel());
+                    }
+                }
+            });
+        }
+
     },
 
     pimcoreReady: function (params, broker) {

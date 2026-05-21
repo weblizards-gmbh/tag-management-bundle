@@ -12,22 +12,16 @@
 
 namespace Weblizards\TagManagementBundle\Model\Tag\Config\Listing;
 
-use Pimcore\Model;
 use Weblizards\TagManagementBundle\Model\Tag\Config;
+use Weblizards\TagManagementBundle\Model\Tag\Config\Dao as ConfigDao;
 use Weblizards\TagManagementBundle\Model\Tag\Config\Listing;
 use Weblizards\TagManagementBundle\Model\Tag\TagConfigNormalizer;
 
 /**
  * @property Listing $model
  */
-class Dao extends Model\Dao\PhpArrayTable
+class Dao extends ConfigDao
 {
-    public function configure(): void
-    {
-        parent::configure();
-        $this->setFile('tag-manager');
-    }
-
     /**
      * Load matching tag configs and keep filter/order handling compatible with normalized storage keys.
      *
@@ -36,18 +30,20 @@ class Dao extends Model\Dao\PhpArrayTable
     public function load(): array
     {
         $properties = [];
-        $propertiesData = $this->db->fetchAll(
-            $this->normalizeFieldMap($this->model->getFilter()),
-            $this->normalizeFieldMap($this->model->getOrder())
-        );
+        $ids = array_unique(array_merge(
+            $this->loadIdList(),
+            array_filter(array_map(static fn (array $row): string => (string) ($row['id'] ?? ''), $this->getLegacyRows()))
+        ));
 
-        foreach ($propertiesData as $propertyData) {
-            $property = Config::getByName($propertyData['id']);
+        foreach ($ids as $id) {
+            $property = Config::getByName((string) $id);
             if ($property) {
                 $properties[] = $property;
             }
         }
 
+        $properties = $this->applyFilter($properties);
+        $properties = $this->applyOrder($properties);
         $this->model->setTags($properties);
 
         return $properties;
@@ -55,25 +51,73 @@ class Dao extends Model\Dao\PhpArrayTable
 
     public function getTotalCount(): int
     {
-        $data = $this->db->fetchAll(
-            $this->normalizeFieldMap($this->model->getFilter()),
-            $this->normalizeFieldMap($this->model->getOrder())
-        );
-
-        return count($data);
+        return count($this->load());
     }
 
     /**
-     * Normalize filter/order maps so callers can keep using model field names during the migration.
+     * Apply the bundle's historical array filter format against normalized config data.
+     *
+     * @param Config[] $properties
+     *
+     * @return Config[]
      */
-    private function normalizeFieldMap(array $fieldMap): array
+    private function applyFilter(array $properties): array
     {
-        $normalized = [];
-
-        foreach ($fieldMap as $field => $value) {
-            $normalized[TagConfigNormalizer::normalizeFieldNameForStorage((string) $field)] = $value;
+        $filter = $this->model->getFilter();
+        if ($filter === []) {
+            return $properties;
         }
 
-        return $normalized;
+        return array_values(array_filter($properties, function (Config $property) use ($filter): bool {
+            foreach ($filter as $field => $expectedValue) {
+                if ($this->extractComparableValue($property, (string) $field) != $expectedValue) {
+                    return false;
+                }
+            }
+
+            return true;
+        }));
+    }
+
+    /**
+     * Apply field => direction sorting against normalized config data.
+     *
+     * @param Config[] $properties
+     *
+     * @return Config[]
+     */
+    private function applyOrder(array $properties): array
+    {
+        $order = $this->model->getOrder();
+        if ($order === []) {
+            return $properties;
+        }
+
+        usort($properties, function (Config $left, Config $right) use ($order): int {
+            foreach ($order as $field => $direction) {
+                $leftValue = $this->extractComparableValue($left, (string) $field);
+                $rightValue = $this->extractComparableValue($right, (string) $field);
+
+                if ($leftValue == $rightValue) {
+                    continue;
+                }
+
+                $comparison = $leftValue <=> $rightValue;
+
+                return strtoupper((string) $direction) === 'DESC' ? -$comparison : $comparison;
+            }
+
+            return 0;
+        });
+
+        return $properties;
+    }
+
+    private function extractComparableValue(Config $property, string $field): mixed
+    {
+        $storageField = TagConfigNormalizer::normalizeFieldNameForStorage($field);
+        $storageData = TagConfigNormalizer::normalizeForStorage($property->getObjectVars());
+
+        return $storageData[$storageField] ?? null;
     }
 }

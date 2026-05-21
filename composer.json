@@ -10,10 +10,10 @@
         }
     ],
     "require": {
-        "pimcore/pimcore": "^10.0",
+        "pimcore/pimcore": "^11.0",
         "nesbot/carbon": "^2.0",
-        "symfony/dom-crawler": "^5.2",
-        "symfony/css-selector": "^5.2",
+        "symfony/dom-crawler": "^6.4",
+        "symfony/css-selector": "^7.4",
         "masterminds/html5": "^2.7"
     },
     "autoload": {

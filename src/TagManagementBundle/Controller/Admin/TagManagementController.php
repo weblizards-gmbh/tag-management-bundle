@@ -15,9 +15,11 @@ namespace Weblizards\TagManagementBundle\Controller\Admin;
 use Pimcore\Controller\Traits\JsonHelperTrait;
 use Pimcore\Controller\UserAwareController;
 use Pimcore\Model\Translation;
+use Symfony\Bundle\FrameworkBundle\Controller\AbstractController;
 use Symfony\Component\HttpFoundation\JsonResponse;
 use Symfony\Component\HttpFoundation\Request;
 use Symfony\Component\Routing\Annotation\Route;
+use Symfony\Contracts\Translation\TranslatorInterface;
 use Weblizards\TagManagementBundle\Model\Tag;
 use Weblizards\TagManagementBundle\Service\TagConfigDataBinder;
 
@@ -29,6 +31,13 @@ class TagManagementController extends UserAwareController
     use JsonHelperTrait;
 
     private const TAG_NAME_PATTERN = '/^[a-zA-Z0-9_-]+$/';
+
+    private TranslatorInterface $translator;
+
+    public function __construct(TranslatorInterface $translator)
+    {
+        $this->translator = $translator;
+    }
 
     /**
      * @Route("/tree", name="weblizards_tagmanagement_tree", methods={"GET", "POST"}, options={"expose"=true})
@@ -198,6 +207,6 @@ class TagManagementController extends UserAwareController
      */
     private function translateAdmin(string $key): string
     {
-        return $this->trans($key, [], Translation::DOMAIN_ADMIN);
+        return $this->translator->trans($key, [], Translation::DOMAIN_ADMIN);
     }
 }
