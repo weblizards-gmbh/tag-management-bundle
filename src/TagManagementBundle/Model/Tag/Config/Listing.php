@@ -21,10 +21,39 @@ use Weblizards\TagManagementBundle\Model\Tag\Config;
  * @method Config[]                                                     load()
  * @method int                                                          getTotalCount()
  */
-class Listing extends Model\Listing\JsonListing
+class Listing extends Model\AbstractModel
 {
     /** @var null|Config[] */
     protected ?array $tags;
+
+    /**
+     * Keep the historic simple array-based filter API used by the bundle's file-backed config listing.
+     *
+     * @var array<string, mixed>
+     */
+    protected array $filter = [];
+
+    /**
+     * Store field => direction pairs for the in-memory/file-backed listing sort.
+     *
+     * @var array<string, string>
+     */
+    protected array $order = [];
+
+    /**
+     * Load all matching configs through the DAO.
+     *
+     * @return Config[]
+     */
+    public function load(): array
+    {
+        return $this->getDao()->load();
+    }
+
+    public function getTotalCount(): int
+    {
+        return $this->getDao()->getTotalCount();
+    }
 
     /**
      * @return Config[]
@@ -56,6 +85,44 @@ class Listing extends Model\Listing\JsonListing
     public function setTags(array $tags): static
     {
         $this->tags = $tags;
+
+        return $this;
+    }
+
+    /**
+     * @return array<string, mixed>
+     */
+    public function getFilter(): array
+    {
+        return $this->filter;
+    }
+
+    /**
+     * @param array<string, mixed> $filter
+     */
+    public function setFilter(array $filter): static
+    {
+        $this->filter = $filter;
+        $this->tags = null;
+
+        return $this;
+    }
+
+    /**
+     * @return array<string, string>
+     */
+    public function getOrder(): array
+    {
+        return $this->order;
+    }
+
+    /**
+     * @param array<string, string> $order
+     */
+    public function setOrder(array $order): static
+    {
+        $this->order = $order;
+        $this->tags = null;
 
         return $this;
     }

@@ -21,6 +21,9 @@ services:
         public: true
         tags: ['controller.service_arguments']
 
+    Weblizards\TagManagementBundle\Command\:
+        resource: '../../Command'
+
 #    Weblizards\TagManagementBundle\Tools\Installer:
 #        public: true
 #
