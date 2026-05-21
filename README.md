@@ -1,89 +1,122 @@
-# Tag Management Bundle for Pimcore 10
+# Tag Management Bundle for Pimcore 11
 
-Dieses Bundle stellt den Bereich "Tag and Snippet Management" zur Verfügung, welcher in Pimcore 6.x als veraltet markiert und mit Version 10 entfernt wurde.
+This bundle restores the "Tag & Snippet Management" area that was available in older Pimcore versions and removed later on.
 
-## Funktionen
+## Features
 
-Das Bundle ermöglicht es, HTML-Tags und Snippets (z.B. Google Analytics, Facebook Pixel, Custom JS/CSS) flexibel in die Webseite zu integrieren, basierend auf verschiedenen Regeln:
+The bundle allows you to inject HTML tags and snippets into websites based on different rules:
 
-- **URL-Pattern**: Anzeige nur auf bestimmten Seiten.
-- **HTTP-Methoden**: Einschränkung auf GET, POST etc.
-- **Site-Check**: Zuweisung zu spezifischen Pimcore-Sites.
-- **Parameter**: Prüfung auf bestimmte Query-Parameter.
-- **Positionierung**: Einfügen am Anfang oder Ende von `<head>` oder `<body>`, oder an spezifischen CSS-Selektoren.
-- **Zeitsteuerung**: Ablaufdatum für einzelne Snippets. Diese werden automatisch deaktiviert, wenn das Datum erreicht ist (erfordert Command-Ausführung).
+- **URL patterns**: output only on matching requests
+- **HTTP methods**: restrict output to `GET`, `POST`, and similar methods
+- **Site checks**: assign tags to specific Pimcore sites
+- **Parameters**: check query or request parameters
+- **Positioning**: insert content at the beginning or end of `<head>` or `<body>`, or into CSS-selected target elements
+- **Scheduling**: define an expiry date per item
+- **Editmode control**: enable or disable items separately for Pimcore editmode
+- **Dynamic parameters**: no more fixed 5-field limitation in the admin UI
+- **Rename in admin**: tags can be renamed safely in the backend
+
+## Requirements
+
+- PHP `>= 8.2`
+- Pimcore `^11.0`
 
 ## Installation
 
-1. **Installation via Composer**
+1. Require the bundle via Composer:
 
-   Aktuell muss das Bundle manuell zum Projekt hinzugefügt werden (da es noch nicht auf Packagist ist oder als lokales Repository eingebunden werden muss):
+```bash
+composer require weblizards/tag-management-bundle
+```
 
-   ```bash
-   composer require weblizards/tag-management-bundle:v1.0.0-RC2
-   ```
+2. Enable the bundle:
 
-2. **Bundle aktivieren**
+```bash
+bin/console pimcore:bundle:enable WeblizardsTagManagementBundle
+```
 
-   Aktivieren Sie das Bundle in der `config/bundles.php` oder über das Pimcore Admin-Panel / CLI:
+3. Run the bundle migrations:
 
-   ```bash
-   bin/console pimcore:bundle:enable WeblizardsTagManagementBundle
-   ```
-   
-3. **Migrations**
+```bash
+bin/console doctrine:migrations:migrate --prefix="Weblizards\\TagManagementBundle"
+```
 
-   Nach der Installation des Bundles müssen die Migrations ausgeführt werden.
+4. If present, migrate legacy configuration from `var/config/tag-manager.php` into the Pimcore `SettingsStore`:
 
-   Migrations anzeigen:
+```bash
+bin/console weblizards:tag-management:migrate-config-storage --dry-run
+bin/console weblizards:tag-management:migrate-config-storage
+```
 
-   ```bash
-   bin/console doctrine:migrations:list --prefix "Weblizards\TagManagementBundle"
-   ```
- 
-   Migrations ausführen:
- 
-   ```bash
-   bin/console doctrine:migrations:migrate --prefix "Weblizards\TagManagementBundle"
-   ```
+Optionally remove the legacy file after a successful migration:
 
-4. **Datenbank & Speicher**
+```bash
+bin/console weblizards:tag-management:migrate-config-storage --cleanup-legacy-file
+```
 
-   Das Bundle verwendet `PhpArrayTable` zur Speicherung der Konfiguration. Die Daten werden standardmäßig im Pimcore-Verzeichnis unter `var/config/tag-manager.php` (oder ähnlich) gespeichert. Es ist keine manuelle Datenbank-Migration erforderlich.
+## Storage
 
-5. **Automatische Deaktivierung abgelaufener Snippets (optional)**
+Current versions persist tag configurations in the Pimcore `SettingsStore` using a bundle-specific scope. This is the intended Pimcore 11-compatible persistence path.
 
-   Um Snippets mit gesetztem Ablaufdatum automatisch zu deaktivieren, kann ein Cronjob eingerichtet werden, der den folgenden Command regelmäßig ausführt:
+For existing installations, a read-only fallback to the legacy file `var/config/tag-manager.php` remains in place during rollout. New or updated entries are persisted in the `SettingsStore`.
 
-   ```bash
-   bin/console weblizards:tag-management:disable-expired-items
-   ```
+## Commands
 
-   Dieser Command prüft alle konfigurierten Tags und setzt das "Deaktiviert"-Flag für alle Items, deren Ablaufdatum in der Vergangenheit liegt.
+### Disable expired items
 
-## Konfiguration
+To persistently disable expired items:
 
-Nach der Installation finden Sie den neuen Menüpunkt unter **Einstellungen > Tag & Snippet Management**.
+```bash
+bin/console weblizards:tag-management:disable-expired-items
+```
 
-## Admin-Routing / FOS-Routes
+This is suitable for a regular cron job.
 
-Im Pimcore-Admin nutzt das Bundle bevorzugt `Routing.generate(...)`, wenn im jeweiligen Setup eine kompatible Routing-Basis bereitgestellt wird. Eine harte Abhaengigkeit auf FOSJsRouting besteht jedoch nicht: fuer die eigenen Admin-Endpunkte existiert ein interner Fallback auf stabile Bundle-Pfade unter `/admin/tag-management/...`.
+### Normalize legacy date values
 
-Das bedeutet:
+If existing data still contains legacy epoch timestamps or inconsistent date formats:
 
-- Ist eine globale JS-Routing-Basis vorhanden, wird sie weiter genutzt.
-- Ist sie nicht vorhanden, bleibt das Bundle fuer seine eigenen Admin-Requests funktionsfaehig.
-- Andere Bundles oder globale Routing-Setups werden dadurch nicht beeinflusst.
+```bash
+bin/console weblizards:tag-management:migrate-item-dates
+```
 
-Damit ist die Routing-Basis fuer den Admin-Bereich dokumentiert und so vorbereitet, dass spaetere Pimcore-/Routing-Aenderungen ohne groesseren Umbau aufgenommen werden koennen.
+### Migrate legacy storage into SettingsStore
 
-## Entwicklung und Tests
+To migrate the old PHP array file into the `SettingsStore`:
 
-Informationen dazu, wie das Bundle während der Entwicklung getestet und in eine Pimcore-Instanz eingebunden werden kann, finden Sie im [Development & Testing Guide](docs/development_testing.md).
+```bash
+bin/console weblizards:tag-management:migrate-config-storage --dry-run
+bin/console weblizards:tag-management:migrate-config-storage
+```
 
-## Lizenz
+Useful options:
 
-Dieses Bundle steht unter der [GPL-3.0-or-later](LICENSE.md).
+- `--dry-run`: show what would be migrated without writing anything
+- `--overwrite`: overwrite existing SettingsStore entries
+- `--cleanup-legacy-file`: remove the old `tag-manager.php` after a successful migration
+
+## Admin Routing
+
+Inside the Pimcore admin, the bundle prefers `Routing.generate(...)` when a compatible global routing base is available in the current setup. For its own admin endpoints, it also provides an internal fallback to stable bundle paths under `/admin/tag-management/...`.
+
+This keeps the bundle functional even without a hard dependency on a specific JavaScript routing setup.
+
+## Development and Testing
+
+The repository contains simple PHP-based regression tests and helper configuration for local development. Additional details can be found in [docs/development_testing.md](docs/development_testing.md).
+
+## Upgrade Notes
+
+When upgrading from older bundle versions, these points are relevant:
+
+- Tag configurations are now persisted via the `SettingsStore`.
+- Existing configurations from `var/config/tag-manager.php` should be migrated using the provided migration command.
+- Legacy key names and older request payloads are still read tolerantly during the transition.
+- Expiry dates are normalized internally to a consistent ISO-8601 UTC format.
+
+## License
+
+This bundle is licensed under [GPL-3.0-or-later](LICENSE.md).
 
 ---
-Entwickelt von [pimcore](https://pimcore.com/) und weiterentwickelt von [Weblizards GmbH](https://www.weblizards.de).
+Developed by [pimcore](https://pimcore.com/) and further maintained by [Weblizards GmbH](https://www.weblizards.de).
