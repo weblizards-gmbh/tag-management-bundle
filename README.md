@@ -2,6 +2,9 @@
 
 This bundle restores the "Tag & Snippet Management" area that was available in older Pimcore versions and removed later on.
 
+
+For Pimcore 10 please use the (pimcore 11 branch)[/weblizards-gmbh/tag-management-bundle/tree/Pimcore-10.x]
+
 ## Features
 
 The bundle allows you to inject HTML tags and snippets into websites based on different rules:

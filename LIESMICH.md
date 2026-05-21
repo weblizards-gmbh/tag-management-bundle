@@ -2,6 +2,8 @@
 
 Dieses Bundle stellt den Bereich "Tag & Snippet Management" wieder bereit, der in älteren Pimcore-Versionen verfügbar war und später entfernt wurde.
 
+Für Pimcore 10 bitte das (Pimcore 10 Branch)[/weblizards-gmbh/tag-management-bundle/tree/Pimcore-10.x] verwenden.
+
 ## Funktionen
 
 Das Bundle ermöglicht es, HTML-Tags und Snippets flexibel in Webseiten zu integrieren, basierend auf verschiedenen Regeln:
