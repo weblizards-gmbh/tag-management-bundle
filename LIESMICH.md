@@ -2,7 +2,7 @@
 
 Dieses Bundle stellt den Bereich "Tag & Snippet Management" wieder bereit, der in älteren Pimcore-Versionen verfügbar war und später entfernt wurde.
 
-Für Pimcore 10 bitte den [pimcore 10 branch](/weblizards-gmbh/tag-management-bundle/tree/Pimcore-10.x) verwenden.
+Für Pimcore 10 bitte den [pimcore 10 branch](https://github.com/weblizards-gmbh/tag-management-bundle/tree/Pimcore-10.x) verwenden.
 
 ## Funktionen
 
