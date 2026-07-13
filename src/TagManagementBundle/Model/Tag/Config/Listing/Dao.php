@@ -66,8 +66,12 @@ class Dao extends Model\Dao\PhpArrayTable
     /**
      * Normalize filter/order maps so callers can keep using model field names during the migration.
      */
-    private function normalizeFieldMap(array $fieldMap): array
+    private function normalizeFieldMap(?array $fieldMap): ?array
     {
+        if ($fieldMap === null) {
+            return null;
+        }
+
         $normalized = [];
 
         foreach ($fieldMap as $field => $value) {
